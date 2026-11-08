@@ -36,6 +36,27 @@ public class ClaimAccess {
         return claims.findByIdAndOwnerUserId(claimId, owner.id()).orElseThrow(ClaimAccess::notFound);
     }
 
+    /**
+     * Like {@link #visible}, but locks the claim row for the rest of the transaction. Use it as the
+     * first read of any operation that changes the claim or adds records to it.
+     */
+    public Claim visibleForUpdate(UUID claimId, AppUserDetails viewer) {
+        Claim claim = claims.findByIdForUpdate(claimId).orElseThrow(ClaimAccess::notFound);
+        if (!canView(claim, viewer)) {
+            throw notFound();
+        }
+        return claim;
+    }
+
+    /** Like {@link #owned}, but locks the claim row for the rest of the transaction. */
+    public Claim ownedForUpdate(UUID claimId, AppUserDetails owner) {
+        Claim claim = claims.findByIdForUpdate(claimId).orElseThrow(ClaimAccess::notFound);
+        if (!claim.isOwnedBy(owner.id())) {
+            throw notFound();
+        }
+        return claim;
+    }
+
     public static boolean canView(Claim claim, AppUserDetails viewer) {
         if (viewer.isStaff()) {
             return claim.getStatus() != ClaimStatus.DRAFT;

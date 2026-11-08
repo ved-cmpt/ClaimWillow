@@ -16,11 +16,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-/** Exercises the real session + cookie CSRF flow the SPA uses (no test-only CSRF shortcuts). */
+/**
+ * Exercises the real session + cookie CSRF flow the SPA uses (no test-only CSRF shortcuts).
+ * Runs in a fresh context because other test classes use the csrf() request post-processor,
+ * which replaces the CSRF token repository on the shared filter chain.
+ */
 @IntegrationTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 class AuthIT {
 
     @Autowired
