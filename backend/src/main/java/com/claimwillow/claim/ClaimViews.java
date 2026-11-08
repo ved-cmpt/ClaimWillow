@@ -19,6 +19,7 @@ import com.claimwillow.claim.ClaimDtos.RelatedClaim;
 import com.claimwillow.claim.ClaimDtos.SnapshotResponse;
 import com.claimwillow.claim.ClaimDtos.TimelineEvent;
 import com.claimwillow.claim.ClaimDtos.UserSummary;
+import com.claimwillow.note.ClaimNote;
 import com.claimwillow.policy.Policy;
 import com.claimwillow.policy.PolicyRepository;
 import com.claimwillow.user.AppUserDetails;
@@ -111,6 +112,15 @@ public class ClaimViews {
         return events.stream().map(e -> new TimelineEvent(e.getId(), e.getEventType(), e.getFromStatus(),
                 e.getToStatus(), e.getSummary(), user(users.get(e.getActorUserId())),
                 e.getVisibility() == EventVisibility.STAFF, e.getOccurredAt())).toList();
+    }
+
+    public List<StaffDtos.NoteResponse> notes(List<ClaimNote> list) {
+        Map<UUID, UserRef> users = directory.lookup(list.stream().map(ClaimNote::getAuthorUserId).toList());
+        return list.stream().map(n -> {
+            UserRef a = users.get(n.getAuthorUserId());
+            return new StaffDtos.NoteResponse(n.getId(), n.getNoteType(), n.getBody(), n.getAuthorUserId(),
+                    a == null ? null : a.displayName(), a == null ? null : a.role(), n.getCreatedAt());
+        }).toList();
     }
 
     private static UserSummary user(UserRef ref) {

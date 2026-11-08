@@ -19,7 +19,12 @@ import com.claimwillow.claim.ClaimDtos.DraftRequest;
 import com.claimwillow.claim.ClaimDtos.StatusCount;
 import com.claimwillow.claim.ClaimDtos.StatusCounts;
 import com.claimwillow.common.ApiError.FieldViolation;
+import com.claimwillow.attachment.ClaimAttachmentRepository;
+import com.claimwillow.common.ApiException;
 import com.claimwillow.common.ValidationFailedException;
+import com.claimwillow.note.ClaimNote;
+import com.claimwillow.note.ClaimNoteRepository;
+import com.claimwillow.note.NoteType;
 import com.claimwillow.policy.Policy;
 import com.claimwillow.policy.PolicyService;
 import com.claimwillow.user.AppUserDetails;
@@ -42,11 +47,13 @@ public class ClaimService {
     private final AuditService audit;
     private final ClaimEventRepository events;
     private final ReferenceGenerator references;
+    private final ClaimNoteRepository notes;
+    private final ClaimAttachmentRepository attachments;
     private final Clock clock;
 
     public ClaimService(ClaimRepository claims, ClaimAccess access, PolicyService policyService,
             RuleEngine ruleEngine, AuditService audit, ClaimEventRepository events, ReferenceGenerator references,
-            Clock clock) {
+            ClaimNoteRepository notes, ClaimAttachmentRepository attachments, Clock clock) {
         this.claims = claims;
         this.access = access;
         this.policyService = policyService;
@@ -54,6 +61,8 @@ public class ClaimService {
         this.audit = audit;
         this.events = events;
         this.references = references;
+        this.notes = notes;
+        this.attachments = attachments;
         this.clock = clock;
     }
 
@@ -71,7 +80,7 @@ public class ClaimService {
         Claim claim = access.owned(claimId, owner);
         ClaimAccess.checkVersion(claim, request.version());
         if (claim.getStatus() != ClaimStatus.DRAFT) {
-            throw com.claimwillow.common.ApiException.conflict("NOT_A_DRAFT",
+            throw ApiException.conflict("NOT_A_DRAFT",
                     "Submitted claims cannot be edited. Use a response when the adjuster requests information.",
                     Map.of("currentStatus", claim.getStatus().name()));
         }
@@ -107,15 +116,64 @@ public class ClaimService {
         audit.record(claim, owner.id(), EventType.SUBMITTED, ClaimStatus.DRAFT, ClaimStatus.SUBMITTED,
                 "Claim " + claim.getReference() + " submitted.", EventVisibility.ALL,
                 Map.of("reference", claim.getReference(), "policyNumber", policy.getPolicyNumber()));
-        recordValidationEvent(claim, owner.id(), findings);
+        recordValidationEvent(claim, owner.id(), findings, null);
         return claims.saveAndFlush(claim);
     }
 
-    void recordValidationEvent(Claim claim, UUID actorId, List<ClaimFinding> findings) {
+    /**
+     * Policyholder answers an information request: NEEDS_INFO -> IN_REVIEW. A written answer is
+     * required unless evidence was attached after the request. Rules re-run so staff see what changed.
+     */
+    @Transactional
+    public Claim respond(UUID claimId, AppUserDetails owner, Long expectedVersion, String message) {
+        Claim claim = access.owned(claimId, owner);
+        ClaimAccess.checkVersion(claim, expectedVersion);
+        if (claim.getStatus() != ClaimStatus.NEEDS_INFO) {
+            throw ApiException.conflict("INVALID_TRANSITION",
+                    "You can only respond when the adjuster has requested information.",
+                    Map.of("currentStatus", claim.getStatus().name(), "requestedStatus", "IN_REVIEW"));
+        }
+        Instant requestedAt = notes.findFirstByClaimIdAndNoteTypeOrderByCreatedAtDesc(claim.getId(),
+                NoteType.REQUEST_INFO).map(ClaimNote::getCreatedAt).orElse(claim.getSubmittedAt());
+        String text = message == null ? "" : message.trim();
+        long newEvidence = attachments.countByClaimIdAndCreatedAtAfter(claim.getId(), requestedAt);
+        if (text.isEmpty() && newEvidence == 0) {
+            throw new ValidationFailedException("Add an explanation or attach the requested evidence.",
+                    List.of(new FieldViolation("message", "Write a response or attach a file first.")));
+        }
+        Instant now = Instant.now(clock);
+        if (!text.isEmpty()) {
+            notes.save(new ClaimNote(claim.getId(), owner.id(), NoteType.POLICYHOLDER_RESPONSE, text, now));
+        }
+        int previousCount = ruleEngine.latestFindings(claim).size();
+        claim.moveTo(ClaimStatus.IN_REVIEW, now);
+        String summary = "Policyholder responded"
+                + (text.isEmpty() ? "" : ": " + StaffClaimService.abbreviate(text))
+                + (newEvidence > 0 ? " (" + newEvidence + " new attachment(s))" : "") + ".";
+        audit.record(claim, owner.id(), EventType.RESPONSE_SUBMITTED, ClaimStatus.NEEDS_INFO, ClaimStatus.IN_REVIEW,
+                summary, EventVisibility.ALL, Map.of("newAttachments", newEvidence));
+        List<ClaimFinding> findings = ruleEngine.runAndStore(claim);
+        recordValidationEvent(claim, owner.id(), findings, previousCount);
+        return claims.saveAndFlush(claim);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ClaimNote> notes(UUID claimId, AppUserDetails viewer) {
+        Claim claim = access.visible(claimId, viewer);
+        if (viewer.isStaff()) {
+            return notes.findByClaimIdOrderByCreatedAtAsc(claim.getId());
+        }
+        return notes.findByClaimIdAndNoteTypeInOrderByCreatedAtAsc(claim.getId(),
+                List.of(NoteType.REQUEST_INFO, NoteType.POLICYHOLDER_RESPONSE, NoteType.DECISION));
+    }
+
+    void recordValidationEvent(Claim claim, UUID actorId, List<ClaimFinding> findings, Integer previousCount) {
         String codes = findings.stream().map(f -> f.getRuleCode().shortCode()).distinct().sorted()
                 .collect(Collectors.joining(", "));
-        String summary = findings.isEmpty() ? "Automated checks ran: no findings."
-                : "Automated checks ran: " + findings.size() + " finding(s) (" + codes + ").";
+        String prefix = previousCount == null ? "Automated checks ran: " : "Automated checks re-ran: ";
+        String was = previousCount == null ? "" : " Previously " + previousCount + ".";
+        String summary = findings.isEmpty() ? prefix + "no findings." + was
+                : prefix + findings.size() + " finding(s) (" + codes + ")." + was;
         audit.record(claim, actorId, EventType.VALIDATION_RUN, null, null, summary, EventVisibility.ALL,
                 Map.of("runId", claim.getLastValidationRunId().toString(), "findingCount", findings.size()));
     }
