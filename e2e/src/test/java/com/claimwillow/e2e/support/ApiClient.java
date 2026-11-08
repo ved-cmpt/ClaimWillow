@@ -83,13 +83,17 @@ public final class ApiClient {
 
     /** Creates and submits a complete claim; returns the claim JSON. */
     public JsonNode submitClaim(String title, String estimate) {
+        return submitClaim(title, estimate, "Synthetic end-to-end test claim: water from a burst pipe damaged a sofa "
+                + "and an area rug in the living room.");
+    }
+
+    public JsonNode submitClaim(String title, String estimate, String description) {
         Map<String, Object> draft = new LinkedHashMap<>();
         draft.put("policyId", firstActivePolicyId());
         draft.put("incidentDate", LocalDate.now().minusDays(3).toString());
         draft.put("incidentType", "DAMAGE");
         draft.put("title", title);
-        draft.put("description", "Synthetic end-to-end test claim: water from a burst pipe damaged a sofa and an "
-                + "area rug in the living room.");
+        draft.put("description", description);
         draft.put("estimatedLoss", estimate);
         JsonNode created = send("POST", "/api/v1/claims", draft);
         return send("POST", "/api/v1/claims/" + created.get("id").asText() + "/submit",

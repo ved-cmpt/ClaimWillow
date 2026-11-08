@@ -6,7 +6,7 @@ real PostgreSQL started by Testcontainers, never the developer database.
 
 | Layer | Tools | Location | Command |
 | --- | --- | --- | --- |
-| Backend unit | JUnit 5, AssertJ, Mockito | `backend/src/test/java/**/*Test.java` | `cd backend; ./mvnw test` |
+| Backend unit | JUnit Jupiter 6, AssertJ, Mockito | `backend/src/test/java/**/*Test.java` | `cd backend; ./mvnw test` |
 | Backend integration | Spring Boot Test, MockMvc, Testcontainers PostgreSQL 16 | `backend/src/test/java/**/*IT.java` | `cd backend; ./mvnw verify` |
 | Frontend | Vitest, React Testing Library, user-event, jsdom | `frontend/src/tests/` | `cd frontend; npm test -- --run` |
 | Browser acceptance | Cucumber 7 (Gherkin), Selenium 4, headless Chrome, Testcontainers | `e2e/` | `cd e2e; ./mvnw test` |
