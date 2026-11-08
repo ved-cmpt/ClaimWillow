@@ -1,0 +1,41 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.log
+hs_err_pid*
+
+# Node / frontend
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.vite/
+
+# Spring Boot static output copied from frontend build
+backend/src/main/resources/static/
+
+# Runtime data
+data/
+storage/
+uploads/
+*.dump
+*.sql.gz
+
+# Test output
+e2e/target/
+screenshots-failed/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
