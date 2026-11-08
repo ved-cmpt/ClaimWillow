@@ -13,4 +13,6 @@ public interface ClaimAttachmentRepository extends JpaRepository<ClaimAttachment
     Optional<ClaimAttachment> findByIdAndClaimId(UUID id, UUID claimId);
 
     long countByClaimId(UUID claimId);
+
+    long countByClaimIdAndCreatedAtAfter(UUID claimId, java.time.Instant after);
 }

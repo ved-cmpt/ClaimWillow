@@ -94,6 +94,20 @@ public class ClaimController {
         return detailAssembler.detail(claimService.submit(id, user, body == null ? null : body.version()), user);
     }
 
+    @PostMapping("/{id}/responses")
+    @PreAuthorize("hasRole('POLICYHOLDER')")
+    @Operation(summary = "Answer an information request (owner, NEEDS_INFO only); returns the claim to IN_REVIEW")
+    public ClaimDetail respond(@PathVariable UUID id, @AuthenticationPrincipal AppUserDetails user,
+            @Valid @RequestBody StaffDtos.ResponseRequest body) {
+        return detailAssembler.detail(claimService.respond(id, user, body.version(), body.message()), user);
+    }
+
+    @GetMapping("/{id}/notes")
+    @Operation(summary = "Notes visible to the viewer (internal staff notes are staff-only)")
+    public List<StaffDtos.NoteResponse> notes(@PathVariable UUID id, @AuthenticationPrincipal AppUserDetails user) {
+        return views.notes(claimService.notes(id, user));
+    }
+
     @GetMapping("/{id}/findings")
     @Operation(summary = "Findings from the latest validation run")
     public List<FindingResponse> findings(@PathVariable UUID id, @AuthenticationPrincipal AppUserDetails user) {

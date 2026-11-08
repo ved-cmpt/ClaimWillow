@@ -7,8 +7,8 @@ import { HomeRedirect } from './pages/HomeRedirect';
 import { LoginPage } from './pages/LoginPage';
 import { MyClaimsPage } from './pages/MyClaimsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PoliciesPage } from './pages/PoliciesPage';
+import { StaffQueuePage } from './pages/StaffQueuePage';
 
 export default function App() {
   return (
@@ -25,7 +25,7 @@ export default function App() {
           </Route>
           <Route path="/claims/:id" element={<ClaimDetailPage />} />
           <Route element={<ProtectedRoute roles={['ADJUSTER', 'ADMIN']} />}>
-            <Route path="/staff/queue" element={<PlaceholderPage title="Work queue" />} />
+            <Route path="/staff/queue" element={<StaffQueuePage />} />
           </Route>
           <Route path="*" element={<NotFoundPage />} />
         </Route>
