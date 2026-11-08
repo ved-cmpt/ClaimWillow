@@ -1,0 +1,23 @@
+# ClaimWillow local stack. Run with: docker compose -p claimwillow up -d db
+# Dev-only credentials for a local database; never reuse them anywhere else.
+name: claimwillow
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: claimwillow
+      POSTGRES_USER: claimwillow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-claimwillow_dev}
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - claimwillow-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U claimwillow -d claimwillow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  claimwillow-db:

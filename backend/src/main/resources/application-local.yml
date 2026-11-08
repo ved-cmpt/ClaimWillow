@@ -1,0 +1,9 @@
+# Local development profile. Dev-only credentials for the local Docker database.
+spring:
+  datasource:
+    password: ${SPRING_DATASOURCE_PASSWORD:claimwillow_dev}
+
+app:
+  seed-demo-data: ${APP_SEED_DEMO_DATA:true}
+  # Dev-only synthetic demo password (documented in README). Never used in prod.
+  seed-demo-password: ${APP_SEED_DEMO_PASSWORD:Willow-Demo-2026!}
