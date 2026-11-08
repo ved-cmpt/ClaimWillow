@@ -45,7 +45,7 @@ class AttachmentIT {
     @Autowired
     JdbcTemplate jdbc;
 
-    private ResultActions upload(AppUser user, UUID claimId, String filename, String declaredType, byte[] bytes)
+    ResultActions upload(AppUser user, UUID claimId, String filename, String declaredType, byte[] bytes)
             throws Exception {
         return mvc.perform(multipart("/api/v1/claims/" + claimId + "/attachments")
                 .file(new MockMultipartFile("file", filename, declaredType, bytes))
