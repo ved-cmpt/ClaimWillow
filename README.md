@@ -11,12 +11,36 @@ browser tests.
 
 ## Live demo
 
-**Coming soon.** The app is ready for free hosting on Render (Docker web service) with a Neon PostgreSQL database
-([render.yaml](render.yaml), [step-by-step guide](docs/DEPLOYMENT.md#3-free-hosting-render--neon-primary-path)). The
-URL will be added here once it is live.
+**https://claimwillow.onrender.com** runs on Render's free plan, with the database on a free Neon PostgreSQL project
+([render.yaml](render.yaml), [deployment guide](docs/DEPLOYMENT.md#3-free-hosting-render--neon-live-deployment)).
 
-> The free host sleeps after 15 minutes without visitors, so the first page load after a quiet spell takes a minute
-> or two while the service wakes up and the JVM starts on its small CPU share. After that it responds normally.
+Shared password for every demo account: **`Willow-Live-2026-Demo!`**
+
+| Email | Role | What to try |
+| --- | --- | --- |
+| `priya@example.com` | Policyholder | Submit a new claim, answer an information request, follow the status and history |
+| `marcus@example.com` | Policyholder | See a claim waiting for more information and a closed claim; a link to one of Priya's claims shows "not found" |
+| `elena@example.com` | Policyholder | See an over-limit claim and the rule findings that explain it |
+| `dana.adjuster@example.com` | Adjuster | Work the queue: assign, review, request information, approve or reject, close |
+| `sam.adjuster@example.com` | Adjuster | Try to act on Dana's claim and see the server refuse it |
+| `admin@example.com` | Administrator | Reassign claims, see reports and the CSV export, enable or disable accounts |
+
+> **Synthetic data only.** Every account, policy and claim is fictional, and the password is public on purpose. Do not
+> enter real personal information or upload real documents. The demo data may be reset at any time.
+
+> **First load can take about a minute.** The free host sleeps after 15 minutes without visitors. The first request
+> after that wakes the service and starts the JVM, which takes about a minute, sometimes a little more. After that
+> it responds normally.
+
+### Try it in 3 minutes
+
+1. Sign in as **Priya**. Choose **New claim**, pick policy HC-100421, fill in the incident, a title, a description
+   and an estimate, then **Review claim** → **Submit claim**. Note the reference and the automated checks.
+2. Sign out and sign in as **Dana**. Find the claim in the **Work queue**, open it, then **Assign to me** →
+   **Start review** → **Request more information** with a short message.
+3. Sign in as **Priya** again. Open the claim, write a response (attach a small PNG or PDF if you like) and send it.
+4. Sign in as **Dana**. Read the response, **Record a decision** → Approve with a note, then **Close claim**. The
+   **History** panel lists every step with its actor and time.
 
 ![Adjuster review screen](docs/screenshots/06-staff-review.png)
 
@@ -93,7 +117,7 @@ Details, data model, trust boundaries and design reasons: [docs/ARCHITECTURE.md]
 | Frontend tests | Vitest 5.1, React Testing Library 16, user-event | Component and form behaviour |
 | Browser tests | Cucumber 7.34 (Gherkin), Selenium 4.52 with headless Chrome | Readable scenarios against the real app |
 | Build/ops | Maven Wrapper, npm, Docker multi-stage image, Docker Compose, GitHub Actions | Reproducible local and CI runs |
-| Hosting target | Azure Container Apps + Azure Database for PostgreSQL (+ private storage) | One container, one managed database; fallback documented |
+| Hosting | Render free web service (Docker) + Neon PostgreSQL (live); Azure Container Apps documented as an alternative | One container, one managed database, free plans |
 
 ## Run it locally
 
