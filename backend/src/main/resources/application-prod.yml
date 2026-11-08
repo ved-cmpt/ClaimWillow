@@ -1,4 +1,21 @@
 # Production profile: everything comes from the environment.
+spring:
+  datasource:
+    # Small pool sized for a 512 MB / shared-CPU instance and a free managed PostgreSQL tier.
+    # Each value can be overridden, e.g. SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE.
+    hikari:
+      maximum-pool-size: 5
+      # Let idle connections close so a scale-to-zero database can suspend.
+      minimum-idle: 0
+      idle-timeout: 300000
+      max-lifetime: 1500000
+      # A suspended serverless database can take a few seconds to wake up.
+      connection-timeout: 30000
+      validation-timeout: 5000
+  flyway:
+    connect-retries: 5
+    connect-retries-interval: 5s
+
 server:
   servlet:
     session:

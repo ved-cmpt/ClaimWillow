@@ -30,7 +30,10 @@ ENV SPRING_PROFILES_ACTIVE=prod \
     PORT=8080 \
     ATTACHMENT_STORAGE_MODE=local \
     ATTACHMENT_LOCAL_DIR=/app/data/attachments \
-    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError"
+
+# The JVM defaults above suit a 512 MB, fractional-CPU instance (for example a free web service).
+# Override JAVA_TOOL_OPTIONS at run time to tune for larger hosts.
 
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
