@@ -18,7 +18,7 @@ public class DbUserDetailsService implements UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) {
-        return users.findByEmail(AppUser.normalizeEmail(username))
+        return users.findByUsername(AppUser.normalizeUsername(username))
                 .map(AppUserDetails::from)
                 .orElseThrow(() -> new UsernameNotFoundException("Unknown user"));
     }

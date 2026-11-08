@@ -20,13 +20,13 @@ import org.openqa.selenium.support.ui.WebDriverWait;
  */
 public class World {
 
+    /** Actor name used in the scenarios -> demo account username. */
     public static final Map<String, String> ACCOUNTS = Map.of(
-            "Priya", "priya@example.com",
-            "Marcus", "marcus@example.com",
-            "Elena", "elena@example.com",
-            "Dana", "dana.adjuster@example.com",
-            "Sam", "sam.adjuster@example.com",
-            "Robin", "admin@example.com");
+            "Priya", "priya",
+            "Marcus", "marcus",
+            "Dana", "dana",
+            "Sam", "sam",
+            "Admin", "admin");
 
     private final AppUnderTest app = AppUnderTest.get();
     private final Map<String, WebDriver> browsers = new LinkedHashMap<>();
@@ -39,16 +39,16 @@ public class World {
         return app.baseUrl();
     }
 
-    public String email(String actor) {
-        String email = ACCOUNTS.get(actor);
-        if (email == null) {
+    public String username(String actor) {
+        String username = ACCOUNTS.get(actor);
+        if (username == null) {
             throw new IllegalArgumentException("Unknown actor " + actor);
         }
-        return email;
+        return username;
     }
 
     public ApiClient api(String actor) {
-        return ApiClient.signedIn(baseUrl(), email(actor), AppUnderTest.DEMO_PASSWORD);
+        return ApiClient.signedIn(baseUrl(), username(actor), AppUnderTest.DEMO_PASSWORD);
     }
 
     /** Switches the active browser to the given actor's (creating it if needed). */
@@ -109,7 +109,7 @@ public class World {
     public void signIn(String actor) {
         as(actor);
         open("/login");
-        byTestId("login-email").sendKeys(email(actor));
+        byTestId("login-username").sendKeys(username(actor));
         byTestId("login-password").sendKeys(AppUnderTest.DEMO_PASSWORD);
         clickable("login-submit").click();
         byTestId("current-user-name");

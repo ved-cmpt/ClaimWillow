@@ -60,9 +60,9 @@ springdoc:
 
 app:
   seed-demo-data: ${APP_SEED_DEMO_DATA:false}
+  # Shared password of the seeded synthetic demo accounts (at least 8 characters). No default here:
+  # seeding is skipped with a warning when it is not set.
   seed-demo-password: ${APP_SEED_DEMO_PASSWORD:}
-  # Only local evaluation may use the password documented in the README.
-  seed-demo-allow-documented-password: ${APP_SEED_DEMO_ALLOW_DOCUMENTED_PASSWORD:false}
   attachments:
     # local (private directory), database (attachment_blobs table) or azure (placeholder)
     storage-mode: ${ATTACHMENT_STORAGE_MODE:local}

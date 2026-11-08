@@ -33,10 +33,10 @@ public final class ApiClient {
         this.http = HttpClient.newBuilder().cookieHandler(cookies).connectTimeout(Duration.ofSeconds(5)).build();
     }
 
-    public static ApiClient signedIn(String baseUrl, String email, String password) {
+    public static ApiClient signedIn(String baseUrl, String username, String password) {
         ApiClient client = new ApiClient(baseUrl);
         client.send("GET", "/api/v1/auth/csrf", null);
-        client.send("POST", "/api/v1/auth/login", Map.of("email", email, "password", password));
+        client.send("POST", "/api/v1/auth/login", Map.of("username", username, "password", password));
         return client;
     }
 

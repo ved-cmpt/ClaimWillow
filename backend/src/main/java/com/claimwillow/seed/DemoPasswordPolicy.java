@@ -3,37 +3,30 @@ package com.claimwillow.seed;
 import java.util.Optional;
 
 /**
- * Decides whether a demo seed password is acceptable. The demo accounts are publicly listed, so on a
- * hosted instance the password is the only thing protecting them.
+ * Decides whether the shared password for the seeded demo accounts is acceptable.
+ *
+ * <p>The demo accounts hold synthetic data only and their password is published on purpose so
+ * visitors can sign in, so this check is deliberately lighter than a real password policy: the
+ * password must be set and have at least {@value #MIN_LENGTH} characters. It applies to the seeded
+ * demo accounts only. BCrypt hashing, login rate limiting, CSRF protection and role checks still
+ * apply to every account. See docs/SECURITY.md.
  */
 public final class DemoPasswordPolicy {
 
-    /** The dev-only password documented in the README; acceptable only for local evaluation. */
-    public static final String DOCUMENTED_DEV_PASSWORD = "Willow-Demo-2026!";
-    static final int MIN_LENGTH = 12;
+    /** The published demo password; also the local and Docker Compose default. */
+    public static final String PUBLIC_DEMO_PASSWORD = "demo1234";
+    static final int MIN_LENGTH = 8;
 
     private DemoPasswordPolicy() {
     }
 
     /** Returns why the password is unacceptable, or empty when it may be used. */
-    public static Optional<String> problem(String password, boolean allowDocumentedDevPassword) {
+    public static Optional<String> problem(String password) {
         if (password == null || password.isBlank()) {
             return Optional.of("APP_SEED_DEMO_PASSWORD is not set");
         }
         if (password.length() < MIN_LENGTH) {
             return Optional.of("APP_SEED_DEMO_PASSWORD is shorter than " + MIN_LENGTH + " characters");
-        }
-        int classes = 0;
-        classes += password.chars().anyMatch(Character::isLowerCase) ? 1 : 0;
-        classes += password.chars().anyMatch(Character::isUpperCase) ? 1 : 0;
-        classes += password.chars().anyMatch(Character::isDigit) ? 1 : 0;
-        classes += password.chars().anyMatch(c -> !Character.isLetterOrDigit(c)) ? 1 : 0;
-        if (classes < 3) {
-            return Optional.of("APP_SEED_DEMO_PASSWORD must mix at least three of: lowercase, uppercase, digits, "
-                    + "symbols");
-        }
-        if (!allowDocumentedDevPassword && DOCUMENTED_DEV_PASSWORD.equals(password)) {
-            return Optional.of("APP_SEED_DEMO_PASSWORD is the publicly documented dev password");
         }
         return Optional.empty();
     }

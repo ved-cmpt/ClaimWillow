@@ -1,25 +1,57 @@
+# One grouped pull request per ecosystem per monthly run, to keep review noise low.
+# Security updates are grouped the same way and still open as soon as an advisory appears.
 version: 2
 updates:
   - package-ecosystem: maven
-    directory: /backend
+    directories:
+      - /backend
+      - /e2e
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-  - package-ecosystem: maven
-    directory: /e2e
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      maven:
+        applies-to: version-updates
+        patterns: ["*"]
+      maven-security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # Cucumber 8 needs extra report wiring in the e2e module; upgrade on a dedicated branch.
+      - dependency-name: "io.cucumber:*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: npm
     directory: /frontend
     schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      npm:
+        applies-to: version-updates
+        patterns: ["*"]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+    ignore:
+      # TypeScript 7 is not yet supported by the lint tooling's peer range; upgrade on a dedicated branch.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      github-actions:
+        patterns: ["*"]
+
   - package-ecosystem: docker
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
+    open-pull-requests-limit: 2
+    groups:
+      docker:
+        patterns: ["*"]

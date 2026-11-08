@@ -40,7 +40,8 @@ stateDiagram-v2
 
 ## Flow A: policyholder submits a claim
 
-1. Sign in, open **My claims** (status counts, filter, search by reference or title).
+1. Sign in with a username and password (demo: `priya` / `demo1234`), open **My claims** (status counts,
+   filter, search by reference or title).
 2. **New claim** — section 1 policy, section 2 incident date, damaged or lost, title, description, estimate in CAD,
    section 3 evidence.
 3. **Save draft** at any time; drafts can be reopened and edited until submitted.

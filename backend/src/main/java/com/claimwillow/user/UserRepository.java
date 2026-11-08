@@ -8,9 +8,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<AppUser, UUID> {
 
-    Optional<AppUser> findByEmail(String email);
+    Optional<AppUser> findByUsername(String username);
 
-    boolean existsByEmail(String email);
+    Optional<AppUser> findByEmail(String email);
 
     List<AppUser> findByRoleInAndEnabledTrueOrderByDisplayName(List<Role> roles);
 

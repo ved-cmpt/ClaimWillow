@@ -32,5 +32,6 @@ services:
         sync: false
       - key: SPRING_DATASOURCE_PASSWORD
         sync: false
+      # Shared password of the synthetic demo accounts (the public demo uses the one in the README).
       - key: APP_SEED_DEMO_PASSWORD
         sync: false

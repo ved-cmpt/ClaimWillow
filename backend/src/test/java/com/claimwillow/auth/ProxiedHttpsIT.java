@@ -66,7 +66,7 @@ class ProxiedHttpsIT {
         assertThat(xsrf).contains("Secure").contains("SameSite=Lax").doesNotContain("HttpOnly");
         assertThat(csrf.headers().firstValue("Strict-Transport-Security")).isPresent();
 
-        String body = "{\"email\":\"" + user.getEmail() + "\",\"password\":\"" + TestFixtures.PASSWORD + "\"}";
+        String body = "{\"username\":\"" + user.getUsername() + "\",\"password\":\"" + TestFixtures.PASSWORD + "\"}";
         HttpResponse<String> noToken = http.send(request("/api/v1/auth/login")
                 .header("Content-Type", "application/json")
                 .header("Cookie", "XSRF-TOKEN=" + value(xsrf))
@@ -86,6 +86,6 @@ class ProxiedHttpsIT {
                 .header("Cookie", String.join("; ", List.of("CLAIMWILLOW_SESSION=" + value(session))))
                 .GET().build(), HttpResponse.BodyHandlers.ofString());
         assertThat(me.statusCode()).isEqualTo(200);
-        assertThat(me.body()).contains(user.getEmail());
+        assertThat(me.body()).contains(user.getUsername());
     }
 }

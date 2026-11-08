@@ -25,7 +25,7 @@ export function useCurrentUser() {
 export function useLogin() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string }) =>
+    mutationFn: (credentials: { username: string; password: string }) =>
       api.post<CurrentUser>('/auth/login', credentials),
     onSuccess: (user) => {
       client.removeQueries({ predicate: (q) => q.queryKey[0] !== 'auth' });

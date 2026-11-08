@@ -32,7 +32,7 @@ on purpose. Section 3.9 covers resetting the demo data and changing that passwor
 | `ATTACHMENT_STORAGE_MODE` | no | `local` (image default; needs a persistent volume at `ATTACHMENT_LOCAL_DIR`), `database` (PostgreSQL `attachment_blobs` table, no disk needed), or `azure` (placeholder, see 4.4) |
 | `ATTACHMENT_LOCAL_DIR` | no | `/app/data/attachments` (image default; `local` mode only) |
 | `APP_SEED_DEMO_DATA` | no | `false` by default; `true` only for a public demo with synthetic accounts |
-| `APP_SEED_DEMO_PASSWORD` | when seeding | shared by the demo accounts. Seeding is **skipped** (with a warning in the log) unless it has at least 12 characters, mixes at least three of lowercase, uppercase, digits and symbols, and is not the dev password printed in the README |
+| `APP_SEED_DEMO_PASSWORD` | when seeding | shared by the five demo accounts; the public demo uses `demo1234`. Seeding is **skipped** (with a warning in the log) when it is missing or shorter than 8 characters. Re-applied to the demo accounts on every start |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags. The image default suits a 512 MB instance: `-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -Xss512k -XX:TieredStopAtLevel=1 -XX:+ExitOnOutOfMemoryError`. Set your own value to override it on larger hosts |
 | `SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE` | no | `5` in `prod`. Idle connections close after 5 minutes (`minimum-idle` is 0), so a scale-to-zero database can suspend |
 | `AZURE_STORAGE_ACCOUNT`, `AZURE_BLOB_CONTAINER` | for `azure` | names only; authenticate with a managed identity |
@@ -180,11 +180,11 @@ Open `https://<service-name>.onrender.com` (the URL is at the top of the service
 1. The sign-in page loads over HTTPS and shows the synthetic-data notice.
 2. `https://<service-name>.onrender.com/actuator/health` returns `{"status":"UP"}`. This also proves the database
    connection.
-3. Sign in as `priya@example.com` with your demo password. Create a claim, attach a small PDF or PNG, and submit it.
+3. Sign in as `priya` with the demo password. Create a claim, attach a small PDF or PNG, and submit it.
    This shows CSRF and the Secure cookie work behind Render's proxy.
-4. Sign out, then sign in as `dana.adjuster@example.com`. Assign the claim, request information, decide it and
+4. Sign out, then sign in as `dana`. Assign the claim, request information, decide it and
    close it.
-5. Download the evidence as the adjuster. Then sign in as `marcus@example.com` and open the same claim URL: it must
+5. Download the evidence as the adjuster. Then sign in as `marcus` and open the same claim URL: it must
    show "not found".
 6. Restart the service from the Render dashboard, or redeploy the latest commit through **Manual Deploy**. The
    claim and its evidence must still be there, because both live in Neon.
@@ -241,16 +241,26 @@ estimates.
 | `Connection to ... refused` / `UnknownHostException` | The URL is not in JDBC form or the host is wrong. Redo 3.3. |
 | `password authentication failed` | The username or password secret is wrong, or was copied with the `@`. |
 | Flyway errors or hangs during startup | Check whether the host contains `-pooler`. Use the direct host (3.2 step 5). |
-| `Demo seeding requested but skipped` | The demo password fails the rules in 3.1. |
+| `Demo seeding requested but skipped` | `APP_SEED_DEMO_PASSWORD` is missing or shorter than 8 characters. |
 | Deploy times out before going live | The first start at 0.1 CPU is slow. Redeploy once. If it repeats, check the log for an earlier error. |
 | `Terminating due to java.lang.OutOfMemoryError` | Unexpected at demo load. Check for very large uploads, or lower `-XX:MaxRAMPercentage` through `JAVA_TOOL_OPTIONS`. |
 
 ### 3.9 Live demo maintenance: reset data, change the password
 
-**How the seed treats passwords.** The seed only creates *missing* accounts, policies and claims. When a demo
-account already exists it is not touched, and **neither is its password**. Changing `APP_SEED_DEMO_PASSWORD` and
-redeploying therefore changes nothing for the existing accounts. The new value is used only for accounts the seed
-creates later, for example after a reset. Pick one of the two ways below.
+**How the seed treats the demo accounts.** With `APP_SEED_DEMO_DATA=true`, every start reconciles the five demo
+accounts (`priya`, `marcus`, `dana`, `sam`, `admin`): missing ones are created, and existing ones get their username,
+display name, role and the current `APP_SEED_DEMO_PASSWORD` re-applied (as a BCrypt hash) and are re-enabled.
+Policies and claims are only created when missing; existing claims are never changed by the seed.
+
+**Change the demo password** (keeps all data):
+
+1. In Render → `claimwillow` service → **Environment**, set `APP_SEED_DEMO_PASSWORD` to the new value (at least 8
+   characters) and save. Render redeploys.
+2. In **Logs**, expect `Synthetic demo data is present (idempotent seed complete).` The five accounts now accept the
+   new password.
+3. Update the password in the README's "Live demo" section and on the sign-in page (`frontend/src/pages/LoginPage.tsx`)
+   through a pull request.
+4. Sessions live in memory, so anyone already signed in stays signed in until the restart that the deploy performs.
 
 **Reset the demo data** (wipes every claim, note, evidence file and account, then re-seeds):
 
@@ -264,41 +274,14 @@ creates later, for example after a reset. Pick one of the two ways below.
    This deletes everything in that database. Check the project and database name first, and run it only on a
    database that holds synthetic data.
 2. In Render, open the `claimwillow` service → **Manual Deploy** → **Restart service** (or **Deploy latest commit**).
-3. In **Logs**, expect Flyway applying migrations `1` to `5`, then
-   `Synthetic demo data is present (idempotent seed complete).` The accounts now use the current
-   `APP_SEED_DEMO_PASSWORD`.
+3. In **Logs**, expect Flyway applying every migration from `1`, then
+   `Synthetic demo data is present (idempotent seed complete).`
 
-**Change the demo password with a reset** (the simplest way):
-
-1. Choose a new password that meets the rules in 3.1 (12+ characters, three of lowercase, uppercase, digits and
-   symbols, not the dev password).
-2. In Render → **Environment**, set `APP_SEED_DEMO_PASSWORD` to it and save. Render redeploys. The existing
-   accounts still use the old password at this point.
-3. Reset the demo data as above. The re-created accounts use the new password.
-4. Update the password in the README's "Live demo" section through a pull request.
-
-**Change the demo password and keep the data** (updates the stored BCrypt hashes in place):
-
-1. Do steps 1 and 2 above first, so a future reset or re-seed uses the same value.
-2. In the Neon **SQL Editor**, run (replace the password; keep the quotes):
-
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS pgcrypto;
-   UPDATE users
-      SET password_hash = crypt('<new demo password>', gen_salt('bf', 12)),
-          updated_at = now()
-    WHERE email IN ('priya@example.com', 'marcus@example.com', 'elena@example.com',
-                    'dana.adjuster@example.com', 'sam.adjuster@example.com', 'admin@example.com');
-   ```
-
-   It must report `UPDATE 6`. `pgcrypto` writes `$2a$12$...` BCrypt hashes, the format the app's
-   `BCryptPasswordEncoder(12)` checks. The `users` table has no append-only trigger, so the update is allowed, and
-   no claim or audit row changes. The SQL editor bypasses the password rules in 3.1, so check the new value
-   against them yourself.
-3. Sign in once as `priya@example.com` with the new password to confirm, then update the README through a pull
-   request.
-4. Sessions live in memory, so anyone already signed in stays signed in until the service restarts. Restart it from
-   **Manual Deploy** to end them.
+**Username migration (V6, V7).** Databases created before usernames existed are upgraded in place on the first start
+of a version that has them: V6 gives every account a unique lower-case username (the demo accounts get their short
+names; other accounts get the part of the email before `@`, with a short suffix on a clash), and V7 folds the retired
+synthetic demo account `elena` into `marcus` (her policy and claims move to Marcus) and removes it. No reset is
+needed.
 
 ## 4. Alternative: Azure Container Apps + Azure Database for PostgreSQL
 
@@ -423,12 +406,12 @@ downgrade authentication or storage privacy to make a host work.
 
 1. Create a new database password (or a second application role).
 2. Update the `db-password` secret, then restart/redeploy the app.
-3. Revoke the old credential. Rotate `APP_SEED_DEMO_PASSWORD` the same way. Existing seeded accounts keep their
-   old password; see section 3.9 for the two ways to change it.
+3. Revoke the old credential. `APP_SEED_DEMO_PASSWORD` is a public demo value rather than a secret; changing it
+   and restarting re-applies it to the demo accounts (section 3.9).
 
 ### Resetting synthetic demo data
 
-The seed only creates missing accounts, policies and claims. To fully reset a demo database, restore it from a clean
+The seed creates missing policies and claims and re-applies the demo accounts' name, role and password. To fully reset a demo database, restore it from a clean
 backup or drop and recreate the `claimwillow` database (Flyway rebuilds the schema and the seed repopulates it on the
 next start with `APP_SEED_DEMO_DATA=true`). Never run this against a database holding anything but synthetic data.
 For the live Render + Neon demo, follow the exact steps in section 3.9.

@@ -25,8 +25,8 @@ import org.testcontainers.utility.DockerImageName;
  */
 public final class AppUnderTest {
 
-    public static final String DEMO_PASSWORD = System.getenv().getOrDefault("E2E_DEMO_PASSWORD",
-            "E2e-Synthetic-Pass-2026");
+    /** Defaults to the published demo password, so the suite signs in exactly as a visitor would. */
+    public static final String DEMO_PASSWORD = System.getenv().getOrDefault("E2E_DEMO_PASSWORD", "demo1234");
 
     private static AppUnderTest instance;
 

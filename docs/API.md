@@ -16,7 +16,7 @@ Base path: `/api/v1`. JSON in and out. The OpenAPI document is served at `/v3/ap
 curl -c jar -b jar http://localhost:8080/api/v1/auth/csrf
 # 2. sign in (token value copied from the XSRF-TOKEN cookie in "jar")
 curl -c jar -b jar -H "X-XSRF-TOKEN: <token>" -H "Content-Type: application/json" \
-     -d '{"email":"priya@example.com","password":"<demo password>"}' http://localhost:8080/api/v1/auth/login
+     -d '{"username":"priya","password":"demo1234"}' http://localhost:8080/api/v1/auth/login
 ```
 
 ## Errors
@@ -55,9 +55,9 @@ Every response carries `X-Request-Id`; the same id appears in server logs.
 | Method | Path | Who | Notes |
 | --- | --- | --- | --- |
 | GET | `/auth/csrf` | anyone | issues `XSRF-TOKEN` cookie |
-| POST | `/auth/login` | anyone | `{email, password}` → current user |
+| POST | `/auth/login` | anyone | `{username, password}` → current user. The username is trimmed and matched case-insensitively; wrong password, unknown or disabled account all give 401 `INVALID_CREDENTIALS` |
 | POST | `/auth/logout` | anyone | invalidates the session, 204 |
-| GET | `/auth/me` | signed in | `{id, email, displayName, role}` |
+| GET | `/auth/me` | signed in | `{id, username, email, displayName, role}` |
 
 ### Policies
 | GET | `/policies/mine` | policyholder | own policies |

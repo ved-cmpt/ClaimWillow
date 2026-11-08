@@ -33,11 +33,12 @@ public class AdminController {
         this.users = users;
     }
 
-    public record UserRow(UUID id, String email, String displayName, Role role, boolean enabled, Instant createdAt) {
+    public record UserRow(UUID id, String username, String email, String displayName, Role role, boolean enabled,
+            Instant createdAt) {
 
         static UserRow of(AppUser u) {
-            return new UserRow(u.getId(), u.getEmail(), u.getDisplayName(), u.getRole(), u.isEnabled(),
-                    u.getCreatedAt());
+            return new UserRow(u.getId(), u.getUsername(), u.getEmail(), u.getDisplayName(), u.getRole(),
+                    u.isEnabled(), u.getCreatedAt());
         }
     }
 

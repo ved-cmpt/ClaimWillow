@@ -8,14 +8,23 @@ import { Spinner } from '../components/Spinner';
 import { homePathFor, useCurrentUser, useLogin } from '../features/auth/useAuth';
 
 interface FormErrors {
-  email?: string;
+  username?: string;
   password?: string;
 }
 
-export function validateLogin(email: string, password: string): FormErrors {
+/** Public synthetic demo accounts; they all share the published demo password. */
+export const DEMO_ACCOUNTS = [
+  { username: 'priya', role: 'Policyholder' },
+  { username: 'marcus', role: 'Policyholder' },
+  { username: 'dana', role: 'Adjuster' },
+  { username: 'sam', role: 'Adjuster' },
+  { username: 'admin', role: 'Admin' },
+] as const;
+export const DEMO_PASSWORD = 'demo1234';
+
+export function validateLogin(username: string, password: string): FormErrors {
   const errors: FormErrors = {};
-  if (!email.trim()) errors.email = 'Email is required.';
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) errors.email = 'Enter a valid email address.';
+  if (!username.trim()) errors.username = 'Username is required.';
   if (!password) errors.password = 'Password is required.';
   return errors;
 }
@@ -31,7 +40,7 @@ export function LoginPage() {
   const login = useLogin();
   const navigate = useNavigate();
   const [params] = useSearchParams();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -44,10 +53,10 @@ export function LoginPage() {
 
   const onSubmit = (event: FormEvent) => {
     event.preventDefault();
-    const found = validateLogin(email, password);
+    const found = validateLogin(username, password);
     setErrors(found);
-    if (found.email || found.password) return;
-    login.mutate({ email: email.trim(), password }, {
+    if (found.username || found.password) return;
+    login.mutate({ username: username.trim(), password }, {
       onSuccess: (user) => navigate(safeNext(params.get('next')) ?? homePathFor(user), { replace: true }),
     });
   };
@@ -75,15 +84,28 @@ export function LoginPage() {
           <p className="mt-1 text-sm text-ink-muted">Use your ClaimWillow account.</p>
           <div className="mt-6 flex flex-col gap-4">
             {serverError && <Alert tone="error" testId="login-error">{serverError}</Alert>}
-            <TextField label="Email" type="email" name="email" autoComplete="username" required
-              value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email}
-              data-testid="login-email" />
+            <TextField label="Username" type="text" name="username" autoComplete="username" required
+              autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="e.g. priya"
+              value={username} onChange={(e) => setUsername(e.target.value)} error={errors.username}
+              data-testid="login-username" />
             <TextField label="Password" type="password" name="password" autoComplete="current-password" required
               value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password}
               data-testid="login-password" />
             <Button type="submit" busy={login.isPending} data-testid="login-submit" className="mt-2 w-full">
               Sign in
             </Button>
+          </div>
+          <div className="mt-6 rounded-md border border-line bg-canvas p-3 text-xs text-ink-muted"
+            data-testid="demo-accounts">
+            <p className="font-medium text-ink">Demo accounts</p>
+            <ul className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+              {DEMO_ACCOUNTS.map((a) => (
+                <li key={a.username}><code className="font-mono text-ink">{a.username}</code> ({a.role})</li>
+              ))}
+            </ul>
+            <p className="mt-1">
+              Password for all: <code className="font-mono text-ink">{DEMO_PASSWORD}</code>. Synthetic data only.
+            </p>
           </div>
         </form>
       </div>
