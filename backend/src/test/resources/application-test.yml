@@ -1,0 +1,4 @@
+app:
+  seed-demo-data: false
+  attachments:
+    local-dir: ${java.io.tmpdir}/claimwillow-test-attachments
