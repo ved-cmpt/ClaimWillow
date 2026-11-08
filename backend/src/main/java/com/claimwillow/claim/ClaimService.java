@@ -77,7 +77,7 @@ public class ClaimService {
 
     @Transactional
     public Claim updateDraft(UUID claimId, AppUserDetails owner, DraftRequest request) {
-        Claim claim = access.owned(claimId, owner);
+        Claim claim = access.ownedForUpdate(claimId, owner);
         ClaimAccess.checkVersion(claim, request.version());
         if (claim.getStatus() != ClaimStatus.DRAFT) {
             throw ApiException.conflict("NOT_A_DRAFT",
@@ -99,7 +99,7 @@ public class ClaimService {
 
     @Transactional
     public Claim submit(UUID claimId, AppUserDetails owner, Long expectedVersion) {
-        Claim claim = access.owned(claimId, owner);
+        Claim claim = access.ownedForUpdate(claimId, owner);
         ClaimAccess.checkVersion(claim, expectedVersion);
         ClaimStateMachine.assertTransition(claim.getStatus(), ClaimStatus.SUBMITTED);
 
@@ -126,7 +126,7 @@ public class ClaimService {
      */
     @Transactional
     public Claim respond(UUID claimId, AppUserDetails owner, Long expectedVersion, String message) {
-        Claim claim = access.owned(claimId, owner);
+        Claim claim = access.ownedForUpdate(claimId, owner);
         ClaimAccess.checkVersion(claim, expectedVersion);
         if (claim.getStatus() != ClaimStatus.NEEDS_INFO) {
             throw ApiException.conflict("INVALID_TRANSITION",
