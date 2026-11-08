@@ -1,0 +1,36 @@
+# Render Blueprint for a free-tier demo: one Docker web service. The PostgreSQL database is external
+# (for example a free Neon project); its connection details are entered as secrets in the Render
+# dashboard when the Blueprint is created. No secret values belong in this file.
+# Step-by-step guide: docs/DEPLOYMENT.md, section "Free hosting: Render + Neon".
+services:
+  - type: web
+    name: claimwillow
+    runtime: docker
+    plan: free
+    # Pick the database region closest to this one (Oregon = AWS us-west-2).
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Readiness does not query the database, so platform health checks never wake a suspended database.
+    healthCheckPath: /actuator/health/readiness
+    # Deploy a new commit on main only after its CI checks pass.
+    branch: main
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: ATTACHMENT_STORAGE_MODE
+        value: database
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: APP_SEED_DEMO_DATA
+        value: "true"
+      # Secrets: Render asks for these values when the Blueprint is first applied.
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: APP_SEED_DEMO_PASSWORD
+        sync: false
