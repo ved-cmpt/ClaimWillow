@@ -48,17 +48,17 @@ export function StaffQueuePage() {
         subtitle={dashboard.data ? `${dashboard.data.assignedToMe} open claim(s) assigned to you · `
           + `${dashboard.data.unassigned} unassigned` : 'Submitted claims awaiting staff action.'} />
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid grid-cols-3 gap-2 sm:gap-3">
         {kpis.map((k) => (
           <button key={k.label} type="button" onClick={() => update({ status: k.status })}
             aria-pressed={status === k.status}
-            className={`rounded-card border bg-surface px-4 py-3 text-left hover:border-accent ${status === k.status
+            className={`rounded-card border bg-surface px-3 py-2.5 text-left hover:border-accent sm:px-4 sm:py-3 ${status === k.status
               ? 'border-accent ring-1 ring-accent' : 'border-line'}`}>
             <span className="block text-xs font-medium uppercase tracking-wide text-ink-faint">{k.label}</span>
             <span className="mt-1 block text-2xl font-semibold tabular text-ink" data-testid={k.testId}>
               {k.value ?? '–'}
             </span>
-            <span className="block text-xs text-ink-muted">{k.hint}</span>
+            <span className="hidden text-xs text-ink-muted sm:block">{k.hint}</span>
           </button>
         ))}
       </div>

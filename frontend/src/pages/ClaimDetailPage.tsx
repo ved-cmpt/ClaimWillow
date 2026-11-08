@@ -63,7 +63,8 @@ export function ClaimDetailPage() {
           <NotesCard claim={c} staff={staff} />
           <TimelineCard claimId={c.id} />
         </div>
-        <aside className="flex flex-col gap-6 lg:sticky lg:top-4 lg:self-start" aria-label="Claim facts and actions">
+        <aside className="order-first flex flex-col gap-6 lg:order-none lg:sticky lg:top-4 lg:self-start"
+          aria-label="Claim facts and actions">
           {staff && <StaffReviewPanel claim={c} onRefresh={refresh} />}
           <FactsCard claim={c} showOwner={staff} />
           <SnapshotCard claim={c} />
