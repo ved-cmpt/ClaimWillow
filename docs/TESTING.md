@@ -24,6 +24,7 @@ On Windows use `.\mvnw.cmd` instead of `./mvnw`. Docker must be running for inte
 - `FileTypeDetectorTest` — magic-byte detection, extension matching, filename sanitising, storage path-traversal
   guard, fail-fast Azure placeholder.
 - `LoginAttemptServiceTest` — sign-in throttling window with a controllable clock.
+- `DemoPasswordPolicyTest`: weak, short or documented-dev demo passwords are refused for hosted seeding.
 
 ## Backend integration tests (real PostgreSQL)
 
@@ -42,12 +43,20 @@ test creates its own users and policies with random identifiers (`TestFixtures`)
   out-of-period and duplicate findings; pagination, filters and counts.
 - `ReviewLifecycleIT` — the full two-role journey to CLOSED with ten timeline events; illegal transitions; stale
   version and second-adjuster conflicts; **six threads assigning the same claim at once produce exactly one winner
-  and one ASSIGNED event**; internal notes are staff-only; staff endpoints are role protected; queue filters/paging.
+  and one ASSIGNED event, repeated 20 times** (this caught a lock-ordering deadlock on CI, fixed by locking the
+  claim row first); internal notes are staff-only; staff endpoints are role protected; queue filters/paging.
 - `DecisionRollbackIT` — a temporary CHECK constraint makes PostgreSQL reject the decision's audit event; the claim
   status, decision timestamp, version and decision note are all unchanged afterwards (one transaction).
 - `AttachmentIT` — owner upload, download headers, 404 for other owners and for staff on drafts, 401 anonymous,
   attachment ids scoped to their claim, type rejection by content (declared content type is ignored), size limit
   413, status rules, CSRF required for uploads, evidence counts as a response to an information request.
+- `DatabaseAttachmentStorageIT`: runs every `AttachmentIT` scenario again with `ATTACHMENT_STORAGE_MODE=database`.
+  It also checks that the bytes land in `attachment_blobs` and not on disk, that rejected uploads leave no bytes,
+  that the 10-file limit holds, that bytes without a metadata row cannot be committed (deferred foreign key), that
+  bytes roll back with their transaction, and that stored evidence cannot be updated.
+- `ProxiedHttpsIT`: real HTTP to the embedded server with `X-Forwarded-Proto: https`, as a hosting proxy sends it.
+  The CSRF and session cookies are `Secure`, HSTS is sent, sign-in without the CSRF header is refused and with it
+  succeeds, and the session works afterwards.
 - `ReportIT` — CSV contents match the database, drafts excluded, formula-injection neutralised, role checks; admin
   account management boundaries.
 - `DemoSeedIT` — the synthetic seed is idempotent and covers several statuses.
@@ -115,7 +124,10 @@ One date input is filled through the browser's native value setter plus an `inpu
 1. **backend** — `./mvnw -B verify` (unit + integration); uploads surefire/failsafe reports.
 2. **frontend** — `npm ci`, `npm run lint`, `npm run test -- --run`, `npm run build`.
 3. **e2e** — builds the frontend and jar, runs the Cucumber suite, uploads the HTML report, screenshots and app log.
-4. **docker** — builds the production image and smoke-tests it (health UP, SPA served) against a throwaway database.
+4. **docker**: builds the production image and smoke-tests it against a throwaway database with the free-hosting
+   settings (`--memory=512m`, `ATTACHMENT_STORAGE_MODE=database`): health and readiness UP, SPA served, memory
+   printed. Startup time and memory at 512 MB, measured locally, are in
+   [DEPLOYMENT.md section 3.8](DEPLOYMENT.md#38-sizing-and-troubleshooting).
 
 A failing job fails the workflow; no step is marked "continue on error".
 
@@ -125,9 +137,10 @@ Recorded from actual runs on the development machine (Windows 11, Java 21, Node 
 
 | Layer | Result |
 | --- | --- |
-| Backend unit | 64 passed, 0 failed |
-| Backend integration | 45 passed, 0 failed |
+| Backend unit | 75 passed, 0 failed |
+| Backend integration | 56 passed, 0 failed (including database-mode attachments and the HTTPS proxy check) |
 | Frontend | 29 passed, 0 failed |
-| Browser acceptance | 10 scenarios / 96 steps passed (two consecutive clean runs) |
+| Browser acceptance | 10 scenarios / 96 steps passed |
 
-GitHub Actions results will appear once the repository is pushed; they are not claimed here.
+The same four CI jobs (backend, frontend, e2e, docker) run on GitHub Actions for every push and pull request; see
+the repository's Actions tab for the latest runs.

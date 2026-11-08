@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import com.claimwillow.policy.Policy;
 import com.claimwillow.policy.PolicyRepository;
@@ -39,6 +40,7 @@ public class DemoDataSeeder {
 
     private final boolean enabled;
     private final String demoPassword;
+    private final boolean allowDocumentedPassword;
     private final UserRepository users;
     private final PolicyRepository policies;
     private final PasswordEncoder passwordEncoder;
@@ -47,11 +49,13 @@ public class DemoDataSeeder {
     private final DemoClaimSeeder claimSeeder;
 
     public DemoDataSeeder(@Value("${app.seed-demo-data:false}") boolean enabled,
-            @Value("${app.seed-demo-password:}") String demoPassword, UserRepository users,
-            PolicyRepository policies, PasswordEncoder passwordEncoder, TransactionTemplate tx, Clock clock,
-            DemoClaimSeeder claimSeeder) {
+            @Value("${app.seed-demo-password:}") String demoPassword,
+            @Value("${app.seed-demo-allow-documented-password:false}") boolean allowDocumentedPassword,
+            UserRepository users, PolicyRepository policies, PasswordEncoder passwordEncoder, TransactionTemplate tx,
+            Clock clock, DemoClaimSeeder claimSeeder) {
         this.enabled = enabled;
         this.demoPassword = demoPassword;
+        this.allowDocumentedPassword = allowDocumentedPassword;
         this.users = users;
         this.policies = policies;
         this.passwordEncoder = passwordEncoder;
@@ -65,9 +69,9 @@ public class DemoDataSeeder {
         if (!enabled) {
             return;
         }
-        if (demoPassword == null || demoPassword.length() < 12) {
-            log.warn("Demo seeding requested but APP_SEED_DEMO_PASSWORD is missing or shorter than 12 characters; "
-                    + "skipping.");
+        Optional<String> problem = DemoPasswordPolicy.problem(demoPassword, allowDocumentedPassword);
+        if (problem.isPresent()) {
+            log.warn("Demo seeding requested but skipped: {}.", problem.get());
             return;
         }
         seed();

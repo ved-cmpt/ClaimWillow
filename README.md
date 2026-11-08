@@ -9,8 +9,14 @@ browser tests.
 > application — not a licensed insurance platform or a production claims-decision system. Do not enter real personal
 > or insurance information.
 
-**Live demo:** not deployed yet. The deployment guide is ready ([docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)); the URL
-will be added here once hosting exists.
+## Live demo
+
+**Coming soon.** The app is ready for free hosting on Render (Docker web service) with a Neon PostgreSQL database
+([render.yaml](render.yaml), [step-by-step guide](docs/DEPLOYMENT.md#3-free-hosting-render--neon-primary-path)). The
+URL will be added here once it is live.
+
+> The free host sleeps after 15 minutes without visitors, so the first page load after a quiet spell takes a minute
+> or two while the service wakes up and the JVM starts on its small CPU share. After that it responds normally.
 
 ![Adjuster review screen](docs/screenshots/06-staff-review.png)
 
@@ -136,14 +142,15 @@ Password for every account: `Willow-Demo-2026!` (a documented dev-only default f
 All settings are environment variables with Spring conventions; see [.env.example](.env.example) (placeholders
 only) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Main ones: `SPRING_PROFILES_ACTIVE`, `SPRING_DATASOURCE_URL`,
 `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `SESSION_COOKIE_SECURE`, `APP_SEED_DEMO_DATA`,
-`APP_SEED_DEMO_PASSWORD`, `ATTACHMENT_STORAGE_MODE`, `ATTACHMENT_LOCAL_DIR`, `PORT`.
+`APP_SEED_DEMO_PASSWORD`, `ATTACHMENT_STORAGE_MODE` (`local`, `database` or `azure`), `ATTACHMENT_LOCAL_DIR`, `PORT`,
+`JAVA_TOOL_OPTIONS`.
 
 ## Tests
 
 | Layer | Command | Latest local result |
 | --- | --- | --- |
-| Backend unit | `cd backend && ./mvnw test` | 64 passed |
-| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 45 passed |
+| Backend unit | `cd backend && ./mvnw test` | 75 passed |
+| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 56 passed |
 | Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 29 passed, build ok |
 | Browser acceptance (Cucumber + Selenium) | build jar and frontend, then `cd e2e && ./mvnw test` | 10 scenarios, 96 steps passed |
 
@@ -188,14 +195,16 @@ docker-compose.yml   Local PostgreSQL and the integrated app
 - [User flows](docs/USER_FLOWS.md) — roles, journeys, status transitions, business rules
 - [Security](docs/SECURITY.md) — authorization matrix, file limits, threats, limitations
 - [Testing](docs/TESTING.md) — test layers, scenarios, fixtures, CI
-- [Deployment](docs/DEPLOYMENT.md) — environment, Azure path, fallback, backups, rollback
+- [Deployment](docs/DEPLOYMENT.md): environment, free hosting on Render + Neon, Azure alternative, backups, rollback
 
 ## Honest limitations
 
-- Not deployed yet; no live URL.
+- No live URL yet; the free-hosting setup is ready and the URL will be added once deployed. On the free host, the
+  first request after 15 idle minutes is slow while the service wakes up.
 - Synthetic data only; uploads are not scanned for malware.
 - Sessions and login throttling are in memory: single instance only for now.
-- Azure Blob evidence storage is a fail-fast placeholder; use a mounted private volume until it is implemented.
+- Evidence is stored on a private volume (`local`) or inside PostgreSQL (`database`, used for free hosting). Azure
+  Blob storage is a fail-fast placeholder.
 - No payments, real adjudication, notifications, MFA or password reset — intentionally out of scope.
 - No accessibility audit beyond semantic HTML, labels, focus styles, keyboard-usable controls and text-plus-colour
   status labels.

@@ -61,7 +61,10 @@ springdoc:
 app:
   seed-demo-data: ${APP_SEED_DEMO_DATA:false}
   seed-demo-password: ${APP_SEED_DEMO_PASSWORD:}
+  # Only local evaluation may use the password documented in the README.
+  seed-demo-allow-documented-password: ${APP_SEED_DEMO_ALLOW_DOCUMENTED_PASSWORD:false}
   attachments:
+    # local (private directory), database (attachment_blobs table) or azure (placeholder)
     storage-mode: ${ATTACHMENT_STORAGE_MODE:local}
     local-dir: ${ATTACHMENT_LOCAL_DIR:./data/attachments}
     max-size-bytes: 5242880

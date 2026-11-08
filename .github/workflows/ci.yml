@@ -103,13 +103,17 @@ jobs:
           docker run -d --name cw-db --network cw-ci -e POSTGRES_DB=claimwillow -e POSTGRES_USER=claimwillow \
             -e POSTGRES_PASSWORD=ci_only_password postgres:16-alpine
           for i in $(seq 1 30); do docker exec cw-db pg_isready -U claimwillow -d claimwillow && break; sleep 2; done
-          docker run -d --name cw-app --network cw-ci -p 8080:8080 \
+          # Same memory limit and storage mode as the free hosting target (512 MB, evidence in PostgreSQL).
+          docker run -d --name cw-app --network cw-ci -p 8080:8080 --memory=512m \
+            -e ATTACHMENT_STORAGE_MODE=database \
             -e SPRING_DATASOURCE_URL=jdbc:postgresql://cw-db:5432/claimwillow \
             -e SPRING_DATASOURCE_USERNAME=claimwillow -e SPRING_DATASOURCE_PASSWORD=ci_only_password \
             -e SESSION_COOKIE_SECURE=false claimwillow:ci
           for i in $(seq 1 60); do curl -fs http://localhost:8080/actuator/health && break; sleep 2; done
           curl -fs http://localhost:8080/actuator/health | grep -q UP
           curl -fs http://localhost:8080/login | grep -q 'id="root"'
+          curl -fs http://localhost:8080/actuator/health/readiness | grep -q UP
+          docker stats --no-stream --format 'memory: {{.MemUsage}}' cw-app
       - name: Container logs
         if: always()
         run: docker logs cw-app || true
