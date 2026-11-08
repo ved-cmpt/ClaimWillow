@@ -170,6 +170,13 @@ class ReviewLifecycleIT {
 
     @Test
     void concurrentAssignmentsProduceExactlyOneWinner() throws Exception {
+        // A single race only exposes lock-ordering problems occasionally; repeat it.
+        for (int race = 0; race < 20; race++) {
+            runAssignmentRace();
+        }
+    }
+
+    private void runAssignmentRace() throws Exception {
         AppUser owner = fixtures.policyholder();
         UUID id = api.submitted(owner, ClaimApi.validDraft(fixtures.activePolicy(owner)));
         List<AppUser> adjusters = new ArrayList<>();

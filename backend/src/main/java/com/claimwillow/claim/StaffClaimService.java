@@ -90,7 +90,7 @@ public class StaffClaimService {
 
     @Transactional
     public Claim assign(UUID claimId, AppUserDetails actor, Long version, UUID requestedAdjusterId) {
-        Claim claim = access.visible(claimId, actor);
+        Claim claim = access.visibleForUpdate(claimId, actor);
         ClaimAccess.checkVersion(claim, version);
         if (!claim.getStatus().isOpenForStaff()) {
             throw ApiException.conflict("INVALID_TRANSITION",
@@ -163,7 +163,7 @@ public class StaffClaimService {
 
     @Transactional
     public Claim close(UUID claimId, AppUserDetails actor, Long version, String note) {
-        Claim claim = access.visible(claimId, actor);
+        Claim claim = access.visibleForUpdate(claimId, actor);
         ClaimAccess.checkVersion(claim, version);
         boolean assignee = actor.id().equals(claim.getAssignedAdjusterUserId());
         if (!assignee && actor.role() != Role.ADMIN) {
@@ -182,7 +182,7 @@ public class StaffClaimService {
 
     @Transactional
     public ClaimNote addInternalNote(UUID claimId, AppUserDetails actor, String body) {
-        Claim claim = access.visible(claimId, actor);
+        Claim claim = access.visibleForUpdate(claimId, actor);
         if (claim.getStatus() == ClaimStatus.CLOSED) {
             throw ApiException.conflict("CLAIM_CLOSED", "Closed claims cannot receive new notes.",
                     Map.of("currentStatus", claim.getStatus().name()));
@@ -201,7 +201,7 @@ public class StaffClaimService {
 
     /** Loads a claim the actor may work on: visible, current version, and assigned to the actor. */
     private Claim assignedClaim(UUID claimId, AppUserDetails actor, Long version) {
-        Claim claim = access.visible(claimId, actor);
+        Claim claim = access.visibleForUpdate(claimId, actor);
         ClaimAccess.checkVersion(claim, version);
         if (!actor.id().equals(claim.getAssignedAdjusterUserId())) {
             throw notAssignee(claim);
