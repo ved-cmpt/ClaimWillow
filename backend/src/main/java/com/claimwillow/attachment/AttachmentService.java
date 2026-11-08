@@ -59,7 +59,8 @@ public class AttachmentService {
 
     @Transactional
     public ClaimAttachment upload(UUID claimId, AppUserDetails user, MultipartFile file) {
-        Claim claim = access.visible(claimId, user);
+        // Locked so the per-claim file limit cannot be exceeded by parallel uploads.
+        Claim claim = access.visibleForUpdate(claimId, user);
         if (!ClaimAction.available(claim, user).contains(ClaimAction.UPLOAD_ATTACHMENT)) {
             throw ApiException.conflict("UPLOAD_NOT_ALLOWED",
                     "Files can't be added to this claim in its current status.",

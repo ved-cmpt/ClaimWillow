@@ -5,16 +5,28 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.persistence.LockModeType;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ClaimRepository extends JpaRepository<Claim, UUID>, JpaSpecificationExecutor<Claim> {
 
     Optional<Claim> findByIdAndOwnerUserId(UUID id, UUID ownerUserId);
+
+    /**
+     * Loads a claim and locks its row until the transaction ends. Every state-changing operation
+     * starts with this, so concurrent writers queue on one lock instead of deadlocking on the
+     * foreign-key locks taken by the events, notes and attachments they insert.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Claim c where c.id = :id")
+    Optional<Claim> findByIdForUpdate(@Param("id") UUID id);
 
     boolean existsByReference(String reference);
 
