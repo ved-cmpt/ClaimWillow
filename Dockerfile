@@ -1,7 +1,7 @@
 # ClaimWillow production image: one container serving the React app and the /api/v1 backend.
 
 # 1) Build the frontend with Vite
-FROM node:24-alpine AS frontend
+FROM node:25-alpine AS frontend
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
@@ -9,7 +9,7 @@ COPY frontend/ ./
 RUN npm run build
 
 # 2) Package the Spring Boot application with the built frontend as static resources
-FROM eclipse-temurin:21-jdk AS backend
+FROM eclipse-temurin:25-jdk AS backend
 WORKDIR /build/backend
 COPY backend/mvnw backend/pom.xml ./
 COPY backend/.mvn .mvn
@@ -19,7 +19,7 @@ COPY --from=frontend /build/frontend/dist src/main/resources/static
 RUN ./mvnw -B -q -DskipTests package
 
 # 3) Minimal runtime
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 RUN groupadd --system app && useradd --system --gid app --home-dir /app --shell /usr/sbin/nologin app \
     && mkdir -p /app/data/attachments && chown -R app:app /app
 WORKDIR /app
