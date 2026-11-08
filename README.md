@@ -149,8 +149,8 @@ only) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Main ones: `SPRING_PROFILES_
 
 | Layer | Command | Latest local result |
 | --- | --- | --- |
-| Backend unit | `cd backend && ./mvnw test` | 64 passed |
-| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 45 passed |
+| Backend unit | `cd backend && ./mvnw test` | 75 passed |
+| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 56 passed |
 | Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 29 passed, build ok |
 | Browser acceptance (Cucumber + Selenium) | build jar and frontend, then `cd e2e && ./mvnw test` | 10 scenarios, 96 steps passed |
 

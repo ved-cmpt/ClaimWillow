@@ -137,9 +137,10 @@ Recorded from actual runs on the development machine (Windows 11, Java 21, Node 
 
 | Layer | Result |
 | --- | --- |
-| Backend unit | 64 passed, 0 failed |
-| Backend integration | 45 passed, 0 failed |
+| Backend unit | 75 passed, 0 failed |
+| Backend integration | 56 passed, 0 failed (including database-mode attachments and the HTTPS proxy check) |
 | Frontend | 29 passed, 0 failed |
-| Browser acceptance | 10 scenarios / 96 steps passed (two consecutive clean runs) |
+| Browser acceptance | 10 scenarios / 96 steps passed |
 
-GitHub Actions results will appear once the repository is pushed; they are not claimed here.
+The same four CI jobs (backend, frontend, e2e, docker) run on GitHub Actions for every push and pull request; see
+the repository's Actions tab for the latest runs.
