@@ -34,7 +34,8 @@ public class TestFixtures {
 
     public AppUser user(Role role) {
         String tag = UUID.randomUUID().toString().substring(0, 8);
-        return users.save(new AppUser(role.name().toLowerCase() + "-" + tag + "@example.com", HASH,
+        String username = role.name().toLowerCase() + "-" + tag;
+        return users.save(new AppUser(username, username + "@example.com", HASH,
                 "Test " + role.name().toLowerCase() + " " + tag, role));
     }
 

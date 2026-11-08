@@ -18,14 +18,17 @@ public final class AppUserDetails implements UserDetails, CredentialsContainer, 
     private static final long serialVersionUID = 1L;
 
     private final UUID id;
+    private final String username;
     private final String email;
     private final String displayName;
     private final Role role;
     private final boolean enabled;
     private transient String passwordHash;
 
-    public AppUserDetails(UUID id, String email, String displayName, Role role, boolean enabled, String passwordHash) {
+    public AppUserDetails(UUID id, String username, String email, String displayName, Role role, boolean enabled,
+            String passwordHash) {
         this.id = id;
+        this.username = username;
         this.email = email;
         this.displayName = displayName;
         this.role = role;
@@ -34,7 +37,7 @@ public final class AppUserDetails implements UserDetails, CredentialsContainer, 
     }
 
     public static AppUserDetails from(AppUser user) {
-        return new AppUserDetails(user.getId(), user.getEmail(), user.getDisplayName(), user.getRole(),
+        return new AppUserDetails(user.getId(), user.getUsername(), user.getEmail(), user.getDisplayName(), user.getRole(),
                 user.isEnabled(), user.getPasswordHash());
     }
 
@@ -70,7 +73,7 @@ public final class AppUserDetails implements UserDetails, CredentialsContainer, 
 
     @Override
     public String getUsername() {
-        return email;
+        return username;
     }
 
     @Override

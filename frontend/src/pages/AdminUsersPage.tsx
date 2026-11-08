@@ -9,6 +9,7 @@ import { formatDateTime } from '../lib/format';
 
 interface UserRow {
   id: string;
+  username: string;
   email: string;
   displayName: string;
   role: Role;
@@ -58,7 +59,7 @@ export function AdminUsersPage() {
                 <tr key={u.id} className="grid grid-cols-2 gap-2 px-5 py-3 md:table-row md:px-0">
                   <td className="col-span-2 md:px-5 md:py-3">
                     <p className="font-medium">{u.displayName}</p>
-                    <p className="text-xs text-ink-faint">{u.email}</p>
+                    <p className="text-xs text-ink-faint">{u.username} · {u.email}</p>
                   </td>
                   <td className="md:px-3 md:py-3">{roleLabel[u.role]}</td>
                   <td className="md:px-3 md:py-3">

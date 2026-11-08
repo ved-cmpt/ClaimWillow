@@ -52,15 +52,15 @@ class AuthIT {
         return found;
     }
 
-    private String loginBody(String email, String password) {
-        return "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
+    private String loginBody(String username, String password) {
+        return "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
     }
 
     @Test
     void loginWithoutCsrfTokenIsRejected() throws Exception {
         AppUser user = fixtures.policyholder();
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content(loginBody(user.getEmail(), TestFixtures.PASSWORD)))
+                        .content(loginBody(user.getUsername(), TestFixtures.PASSWORD)))
                 .andExpect(status().isForbidden());
     }
 
@@ -70,8 +70,9 @@ class AuthIT {
         Cookie csrf = fetchCsrfCookie();
         MvcResult login = mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody(user.getEmail().toUpperCase(), TestFixtures.PASSWORD)))
+                        .content(loginBody("  " + user.getUsername().toUpperCase() + " ", TestFixtures.PASSWORD)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value(user.getUsername()))
                 .andExpect(jsonPath("$.email").value(user.getEmail()))
                 .andExpect(jsonPath("$.role").value("POLICYHOLDER"))
                 .andExpect(jsonPath("$.password").doesNotExist())
@@ -93,7 +94,7 @@ class AuthIT {
         Cookie csrf = fetchCsrfCookie();
         MvcResult login = mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody(user.getEmail(), TestFixtures.PASSWORD)))
+                        .content(loginBody(user.getUsername(), TestFixtures.PASSWORD)))
                 .andExpect(status().isOk()).andReturn();
         MockHttpSession session = (MockHttpSession) login.getRequest().getSession(false);
         Cookie token = lastCookie(login, "XSRF-TOKEN");
@@ -115,14 +116,25 @@ class AuthIT {
         Cookie csrf = fetchCsrfCookie();
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody(user.getEmail(), "wrong-password")))
+                        .content(loginBody(user.getUsername(), "wrong-password")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody("nobody@example.com", "whatever-password")))
+                        .content(loginBody("nobody", "whatever-password")))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.message").value("Email or password is incorrect."));
+                .andExpect(jsonPath("$.message").value("Username or password is incorrect."));
+    }
+
+    @Test
+    void emailIsNoLongerASignInName() throws Exception {
+        AppUser user = fixtures.policyholder();
+        Cookie csrf = fetchCsrfCookie();
+        mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
+                        .content(loginBody(user.getEmail(), TestFixtures.PASSWORD)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("INVALID_CREDENTIALS"));
     }
 
     @Test
@@ -130,7 +142,7 @@ class AuthIT {
         Cookie csrf = fetchCsrfCookie();
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content("{\"email\":\"not-an-email\",\"password\":\"\"}"))
+                        .content("{\"username\":\" \",\"password\":\"\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDATION_FAILED"))
                 .andExpect(jsonPath("$.fieldErrors.length()").value(2));
@@ -143,12 +155,12 @@ class AuthIT {
         for (int i = 0; i < 5; i++) {
             mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                             .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                            .content(loginBody(user.getEmail(), "wrong-password-" + i)))
+                            .content(loginBody(user.getUsername(), "wrong-password-" + i)))
                     .andExpect(status().isUnauthorized());
         }
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody(user.getEmail(), TestFixtures.PASSWORD)))
+                        .content(loginBody(user.getUsername(), TestFixtures.PASSWORD)))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(jsonPath("$.code").value("TOO_MANY_ATTEMPTS"));
     }
@@ -159,7 +171,7 @@ class AuthIT {
         Cookie csrf = fetchCsrfCookie();
         mvc.perform(post("/api/v1/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue())
-                        .content(loginBody(user.getEmail(), TestFixtures.PASSWORD)))
+                        .content(loginBody(user.getUsername(), TestFixtures.PASSWORD)))
                 .andExpect(status().isUnauthorized());
     }
 

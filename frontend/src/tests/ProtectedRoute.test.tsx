@@ -26,7 +26,7 @@ describe('ProtectedRoute', () => {
 
   it('sends a policyholder away from staff routes', async () => {
     mockFetch({
-      'GET /auth/me': () => jsonResponse({ id: '1', email: 'p@example.com', displayName: 'P', role: 'POLICYHOLDER' }),
+      'GET /auth/me': () => jsonResponse({ id: '1', username: 'p', email: 'p@example.com', displayName: 'P', role: 'POLICYHOLDER' }),
     });
     renderWithProviders(routes, { route: '/staff/queue' });
     expect(await screen.findByText('Claims home')).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe('ProtectedRoute', () => {
 
   it('lets staff in', async () => {
     mockFetch({
-      'GET /auth/me': () => jsonResponse({ id: '2', email: 'd@example.com', displayName: 'D', role: 'ADJUSTER' }),
+      'GET /auth/me': () => jsonResponse({ id: '2', username: 'd', email: 'd@example.com', displayName: 'D', role: 'ADJUSTER' }),
     });
     renderWithProviders(routes, { route: '/staff/queue' });
     expect(await screen.findByText('Staff queue')).toBeInTheDocument();
@@ -43,9 +43,9 @@ describe('ProtectedRoute', () => {
 
 describe('navItemsFor', () => {
   it('shows role-appropriate navigation', () => {
-    expect(navItemsFor({ id: '1', email: '', displayName: '', role: 'POLICYHOLDER' }).map((i) => i.label))
+    expect(navItemsFor({ id: '1', username: '', email: '', displayName: '', role: 'POLICYHOLDER' }).map((i) => i.label))
       .toEqual(['My claims', 'My policies']);
-    expect(navItemsFor({ id: '1', email: '', displayName: '', role: 'ADMIN' }).map((i) => i.label))
+    expect(navItemsFor({ id: '1', username: '', email: '', displayName: '', role: 'ADMIN' }).map((i) => i.label))
       .toContain('Accounts');
     expect(navItemsFor(null)).toEqual([]);
   });

@@ -23,9 +23,9 @@ describe('LoginPage', () => {
     const fetchMock = mockFetch({ 'GET /auth/me': () => jsonResponse({ code: 'UNAUTHENTICATED' }, 401) });
     renderLogin();
     await userEvent.click(await screen.findByRole('button', { name: 'Sign in' }));
-    expect(screen.getByText('Email is required.')).toBeInTheDocument();
+    expect(screen.getByText('Username is required.')).toBeInTheDocument();
     expect(screen.getByText('Password is required.')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email/)).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText(/Username/)).toHaveAttribute('aria-invalid', 'true');
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/auth/login'))).toBe(false);
   });
 
@@ -34,13 +34,13 @@ describe('LoginPage', () => {
       'GET /auth/me': () => jsonResponse({ code: 'UNAUTHENTICATED' }, 401),
       'GET /auth/csrf': () => jsonResponse({ headerName: 'X-XSRF-TOKEN' }),
       'POST /auth/login': () =>
-        jsonResponse({ code: 'INVALID_CREDENTIALS', message: 'Email or password is incorrect.' }, 401),
+        jsonResponse({ code: 'INVALID_CREDENTIALS', message: 'Username or password is incorrect.' }, 401),
     });
     renderLogin();
-    await userEvent.type(await screen.findByLabelText(/Email/), 'priya@example.com');
+    await userEvent.type(await screen.findByLabelText(/Username/), 'priya');
     await userEvent.type(screen.getByLabelText(/Password/), 'wrong');
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByTestId('login-error')).toHaveTextContent('Email or password is incorrect.');
+    expect(await screen.findByTestId('login-error')).toHaveTextContent('Username or password is incorrect.');
   });
 
   it('sends credentials with the CSRF header and routes staff to the queue', async () => {
@@ -48,21 +48,31 @@ describe('LoginPage', () => {
     const fetchMock = mockFetch({
       'GET /auth/me': () => jsonResponse({ code: 'UNAUTHENTICATED' }, 401),
       'POST /auth/login': () =>
-        jsonResponse({ id: '1', email: 'dana@example.com', displayName: 'Dana', role: 'ADJUSTER' }),
+        jsonResponse({ id: '1', username: 'dana', email: 'dana@example.com', displayName: 'Dana', role: 'ADJUSTER' }),
     });
     renderLogin();
-    await userEvent.type(await screen.findByLabelText(/Email/), 'dana@example.com');
+    await userEvent.type(await screen.findByLabelText(/Username/), '  dana ');
     await userEvent.type(screen.getByLabelText(/Password/), 'secret-password');
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => expect(screen.getByText('Staff queue')).toBeInTheDocument());
     const loginCall = fetchMock.mock.calls.find(([url]) => String(url).includes('/auth/login'))!;
     const init = loginCall[1] as RequestInit;
     expect((init.headers as Record<string, string>)['X-XSRF-TOKEN']).toBe('token-123');
-    expect(JSON.parse(init.body as string)).toEqual({ email: 'dana@example.com', password: 'secret-password' });
+    expect(JSON.parse(init.body as string)).toEqual({ username: 'dana', password: 'secret-password' });
   });
 
-  it('validateLogin rejects malformed email', () => {
-    expect(validateLogin('nope', 'x').email).toBe('Enter a valid email address.');
-    expect(validateLogin('a@b.co', 'x')).toEqual({});
+  it('validateLogin only requires a username and a password', () => {
+    expect(validateLogin('   ', 'x').username).toBe('Username is required.');
+    expect(validateLogin('priya', '')).toEqual({ password: 'Password is required.' });
+    expect(validateLogin('priya', 'x')).toEqual({});
+  });
+
+  it('lists the five demo accounts and the shared demo password', async () => {
+    mockFetch({ 'GET /auth/me': () => jsonResponse({ code: 'UNAUTHENTICATED' }, 401) });
+    renderLogin();
+    const hint = await screen.findByTestId('demo-accounts');
+    for (const name of ['priya', 'marcus', 'dana', 'sam', 'admin']) expect(hint).toHaveTextContent(name);
+    expect(hint).toHaveTextContent('demo1234');
+    expect(screen.getByLabelText(/Username/)).toHaveAttribute('placeholder', 'e.g. priya');
   });
 });

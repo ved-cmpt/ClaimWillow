@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -64,15 +63,15 @@ public class AuthController {
     }
 
     public record LoginRequest(
-            @NotBlank(message = "Email is required.") @Email(message = "Enter a valid email address.")
-            @Size(max = 254) String email,
+            @NotBlank(message = "Username is required.") @Size(max = 40) String username,
             @NotBlank(message = "Password is required.") @Size(max = 200) String password) {
     }
 
-    public record CurrentUserResponse(UUID id, String email, String displayName, Role role) {
+    public record CurrentUserResponse(UUID id, String username, String email, String displayName, Role role) {
 
         static CurrentUserResponse of(AppUserDetails user) {
-            return new CurrentUserResponse(user.id(), user.email(), user.displayName(), user.role());
+            return new CurrentUserResponse(user.id(), user.getUsername(), user.email(), user.displayName(),
+                    user.role());
         }
     }
 
@@ -87,11 +86,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Sign in with email and password; creates a server-side session")
+    @Operation(summary = "Sign in with username and password; creates a server-side session")
     public CurrentUserResponse login(@Valid @RequestBody LoginRequest body, HttpServletRequest request,
             HttpServletResponse response) {
-        String email = AppUser.normalizeEmail(body.email());
-        String accountKey = "account:" + email;
+        String username = AppUser.normalizeUsername(body.username());
+        String accountKey = "account:" + username;
         String clientKey = "client:" + request.getRemoteAddr();
         if (loginAttempts.isBlocked(accountKey) || loginAttempts.isBlocked(clientKey)) {
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "TOO_MANY_ATTEMPTS",
@@ -100,13 +99,13 @@ public class AuthController {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(email, body.password()));
+                    UsernamePasswordAuthenticationToken.unauthenticated(username, body.password()));
         } catch (AuthenticationException ex) {
             loginAttempts.recordFailure(accountKey);
             loginAttempts.recordFailure(clientKey);
             log.info("Failed sign-in attempt");
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS",
-                    "Email or password is incorrect.");
+                    "Username or password is incorrect.");
         }
         loginAttempts.recordSuccess(accountKey);
 

@@ -36,8 +36,7 @@ services:
       SESSION_COOKIE_SECURE: "false"
       # Synthetic demo accounts for local evaluation only.
       APP_SEED_DEMO_DATA: ${APP_SEED_DEMO_DATA:-true}
-      APP_SEED_DEMO_PASSWORD: ${APP_SEED_DEMO_PASSWORD:-Willow-Demo-2026!}
-      APP_SEED_DEMO_ALLOW_DOCUMENTED_PASSWORD: "true"
+      APP_SEED_DEMO_PASSWORD: ${APP_SEED_DEMO_PASSWORD:-demo1234}
       ATTACHMENT_STORAGE_MODE: local
       ATTACHMENT_LOCAL_DIR: /app/data/attachments
     ports:

@@ -21,6 +21,9 @@ public class AppUser {
     private UUID id;
 
     @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
@@ -45,12 +48,18 @@ public class AppUser {
     protected AppUser() {
     }
 
-    public AppUser(String email, String passwordHash, String displayName, Role role) {
+    public AppUser(String username, String email, String passwordHash, String displayName, Role role) {
         this.id = UUID.randomUUID();
+        this.username = normalizeUsername(username);
         this.email = normalizeEmail(email);
         this.passwordHash = passwordHash;
         this.displayName = displayName;
         this.role = role;
+    }
+
+    /** Usernames are compared trimmed and case-insensitively; they are stored in lower case. */
+    public static String normalizeUsername(String username) {
+        return username == null ? null : username.trim().toLowerCase(Locale.ROOT);
     }
 
     public static String normalizeEmail(String email) {
@@ -71,6 +80,10 @@ public class AppUser {
 
     public UUID getId() {
         return id;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public String getEmail() {
@@ -99,6 +112,22 @@ public class AppUser {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public void setUsername(String username) {
+        this.username = normalizeUsername(username);
+    }
+
+    public void setEmail(String email) {
+        this.email = normalizeEmail(email);
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public Instant getCreatedAt() {

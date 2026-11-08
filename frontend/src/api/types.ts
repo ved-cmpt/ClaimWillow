@@ -2,6 +2,7 @@ export type Role = 'POLICYHOLDER' | 'ADJUSTER' | 'ADMIN';
 
 export interface CurrentUser {
   id: string;
+  username: string;
   email: string;
   displayName: string;
   role: Role;

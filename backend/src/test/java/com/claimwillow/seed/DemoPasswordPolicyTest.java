@@ -11,21 +11,25 @@ class DemoPasswordPolicyTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    @ValueSource(strings = {"   ", "Short-1a", "alllowercaseletters", "lowercase-and-symbols", "ALLUPPER123456"})
-    void weakPasswordsAreRejected(String password) {
-        assertThat(DemoPasswordPolicy.problem(password, false)).isPresent();
+    @ValueSource(strings = {"   ", "        ", "demo123", "short"})
+    void missingOrShortPasswordsAreRejected(String password) {
+        assertThat(DemoPasswordPolicy.problem(password)).isPresent();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"E2e-Synthetic-Pass-2026", "maple7River9stone", "correct-horse-Battery"})
-    void strongPasswordsAreAccepted(String password) {
-        assertThat(DemoPasswordPolicy.problem(password, false)).isEmpty();
+    @ValueSource(strings = {"demo1234", "abcdefgh", "E2e-Synthetic-Pass-2026"})
+    void passwordsWithAtLeastEightCharactersAreAccepted(String password) {
+        assertThat(DemoPasswordPolicy.problem(password)).isEmpty();
     }
 
     @Test
-    void documentedDevPasswordIsOnlyAllowedForLocalEvaluation() {
-        assertThat(DemoPasswordPolicy.problem(DemoPasswordPolicy.DOCUMENTED_DEV_PASSWORD, false)).get()
-                .asString().contains("publicly documented");
-        assertThat(DemoPasswordPolicy.problem(DemoPasswordPolicy.DOCUMENTED_DEV_PASSWORD, true)).isEmpty();
+    void thePublishedDemoPasswordIsAccepted() {
+        assertThat(DemoPasswordPolicy.PUBLIC_DEMO_PASSWORD).isEqualTo("demo1234");
+        assertThat(DemoPasswordPolicy.problem(DemoPasswordPolicy.PUBLIC_DEMO_PASSWORD)).isEmpty();
+    }
+
+    @Test
+    void shortPasswordExplainsTheMinimum() {
+        assertThat(DemoPasswordPolicy.problem("demo")).get().asString().contains("8 characters");
     }
 }

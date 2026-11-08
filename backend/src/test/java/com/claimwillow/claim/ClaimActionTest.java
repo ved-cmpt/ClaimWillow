@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 class ClaimActionTest {
 
     static AppUserDetails user(Role role) {
-        return new AppUserDetails(UUID.randomUUID(), role.name() + "@example.com", role.name(), role, true, null);
+        return new AppUserDetails(UUID.randomUUID(), role.name().toLowerCase(), role.name() + "@example.com", role.name(), role, true, null);
     }
 
     static Claim submittedClaim(UUID owner) {

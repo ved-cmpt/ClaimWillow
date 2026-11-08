@@ -3,8 +3,6 @@ package com.claimwillow.seed;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
 
 import com.claimwillow.claim.Claim;
 import com.claimwillow.claim.ClaimDtos.DraftRequest;
@@ -51,10 +49,9 @@ public class DemoClaimSeeder {
     public void seedClaims() {
         AppUserDetails priya = details(DemoDataSeeder.PRIYA);
         AppUserDetails marcus = details(DemoDataSeeder.MARCUS);
-        AppUserDetails elena = details(DemoDataSeeder.ELENA);
         AppUserDetails dana = details(DemoDataSeeder.DANA);
         AppUserDetails sam = details(DemoDataSeeder.SAM);
-        if (priya == null || marcus == null || elena == null || dana == null || sam == null) {
+        if (priya == null || marcus == null || dana == null || sam == null) {
             return;
         }
         if (claims.findMine(priya.id(), null, null, org.springframework.data.domain.PageRequest.of(0, 1))
@@ -62,9 +59,12 @@ public class DemoClaimSeeder {
             return;
         }
         LocalDate today = LocalDate.now(clock);
-        Policy priyaPolicy = activePolicy(priya.id());
-        Policy marcusPolicy = activePolicy(marcus.id());
-        Policy elenaPolicy = activePolicy(elena.id());
+        Policy priyaPolicy = policy(DemoDataSeeder.PRIYA_POLICY);
+        Policy marcusPolicy = policy(DemoDataSeeder.MARCUS_POLICY);
+        Policy marcusSecondPolicy = policy(DemoDataSeeder.MARCUS_SECOND_POLICY);
+        if (priyaPolicy == null || marcusPolicy == null || marcusSecondPolicy == null) {
+            return;
+        }
 
         // 1. Submitted, unassigned: waiting in the queue.
         submit(priya, priyaPolicy, today.minusDays(6), IncidentType.DAMAGE,
@@ -100,7 +100,8 @@ public class DemoClaimSeeder {
         staff.close(kitchen.getId(), sam, kitchen.getVersion(), null);
 
         // 5. Over the coverage limit, unassigned.
-        submit(elena, elenaPolicy, today.minusDays(3), IncidentType.DAMAGE, "Basement flood damaged stored contents",
+        submit(marcus, marcusSecondPolicy, today.minusDays(3), IncidentType.DAMAGE,
+                "Basement flood damaged stored contents",
                 "Heavy rain caused groundwater to enter the basement. Stored furniture, a home gym and archived "
                         + "boxes of books were damaged beyond repair.", "82000.00");
 
@@ -117,12 +118,11 @@ public class DemoClaimSeeder {
         return claimService.submit(draft.getId(), owner, draft.getVersion());
     }
 
-    private Policy activePolicy(UUID ownerId) {
-        List<Policy> list = policies.findByPolicyholderUserIdOrderByEffectiveDateDesc(ownerId);
-        return list.getFirst();
+    private Policy policy(String number) {
+        return policies.findByPolicyNumber(number).orElse(null);
     }
 
-    private AppUserDetails details(String email) {
-        return users.findByEmail(email).map(AppUserDetails::from).orElse(null);
+    private AppUserDetails details(String username) {
+        return users.findByUsername(username).map(AppUserDetails::from).orElse(null);
     }
 }

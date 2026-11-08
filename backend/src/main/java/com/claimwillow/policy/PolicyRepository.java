@@ -13,4 +13,6 @@ public interface PolicyRepository extends JpaRepository<Policy, UUID> {
     Optional<Policy> findByIdAndPolicyholderUserId(UUID id, UUID policyholderUserId);
 
     boolean existsByPolicyNumber(String policyNumber);
+
+    Optional<Policy> findByPolicyNumber(String policyNumber);
 }
