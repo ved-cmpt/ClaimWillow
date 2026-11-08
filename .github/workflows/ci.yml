@@ -88,3 +88,28 @@ jobs:
             e2e/target/screenshots
             e2e/target/e2e-backend.log
           if-no-files-found: ignore
+
+  docker:
+    name: Production image build
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image (frontend + backend, multi-stage)
+        run: docker build --tag claimwillow:ci .
+      - name: Smoke test the image against a throwaway database
+        run: |
+          docker network create cw-ci
+          docker run -d --name cw-db --network cw-ci -e POSTGRES_DB=claimwillow -e POSTGRES_USER=claimwillow \
+            -e POSTGRES_PASSWORD=ci_only_password postgres:16-alpine
+          for i in $(seq 1 30); do docker exec cw-db pg_isready -U claimwillow -d claimwillow && break; sleep 2; done
+          docker run -d --name cw-app --network cw-ci -p 8080:8080 \
+            -e SPRING_DATASOURCE_URL=jdbc:postgresql://cw-db:5432/claimwillow \
+            -e SPRING_DATASOURCE_USERNAME=claimwillow -e SPRING_DATASOURCE_PASSWORD=ci_only_password \
+            -e SESSION_COOKIE_SECURE=false claimwillow:ci
+          for i in $(seq 1 60); do curl -fs http://localhost:8080/actuator/health && break; sleep 2; done
+          curl -fs http://localhost:8080/actuator/health | grep -q UP
+          curl -fs http://localhost:8080/login | grep -q 'id="root"'
+      - name: Container logs
+        if: always()
+        run: docker logs cw-app || true
