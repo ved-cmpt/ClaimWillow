@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+/* ClaimWillow design tokens: warm neutral canvas, navy ink, one teal accent. */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-canvas: #f7f5f0;
+  --color-surface: #ffffff;
+  --color-subtle: #f1eee7;
+  --color-line: #e2ddd2;
+  --color-line-strong: #cfc8b9;
+  --color-ink: #17202e;
+  --color-ink-muted: #4f5a6b;
+  --color-ink-faint: #737d8c;
+  --color-accent: #0f5f5c;
+  --color-accent-strong: #0a4644;
+  --color-accent-soft: #e3f0ee;
+  --color-danger: #a12a2a;
+  --color-danger-soft: #fbeaea;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #fdf3dc;
+  --color-success: #23673a;
+  --color-success-soft: #e6f3ea;
+  --color-info: #2d4f86;
+  --color-info-soft: #e8eef9;
+  --radius-card: 10px;
+}
+
+html {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
