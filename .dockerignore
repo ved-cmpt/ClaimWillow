@@ -1,0 +1,13 @@
+.git
+.github
+.local
+**/node_modules
+**/target
+frontend/dist
+frontend/coverage
+e2e
+docs
+data
+*.log
+.env
+.env.*

@@ -115,6 +115,7 @@ One date input is filled through the browser's native value setter plus an `inpu
 1. **backend** — `./mvnw -B verify` (unit + integration); uploads surefire/failsafe reports.
 2. **frontend** — `npm ci`, `npm run lint`, `npm run test -- --run`, `npm run build`.
 3. **e2e** — builds the frontend and jar, runs the Cucumber suite, uploads the HTML report, screenshots and app log.
+4. **docker** — builds the production image and smoke-tests it (health UP, SPA served) against a throwaway database.
 
 A failing job fails the workflow; no step is marked "continue on error".
 
