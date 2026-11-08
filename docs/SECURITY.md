@@ -8,14 +8,20 @@ security regulation.
 
 - Server-side sessions (Spring Security). Cookie `CLAIMWILLOW_SESSION`: `HttpOnly`, `SameSite=Lax`, `Secure` in the
   `prod` profile (`SESSION_COOKIE_SECURE`), 30-minute idle timeout.
+- Behind a TLS-terminating proxy (for example Render), `X-Forwarded-Proto` is honoured, so the app treats requests as
+  HTTPS: the session and CSRF cookies are marked `Secure` and HSTS is sent. `ProxiedHttpsIT` checks this over real
+  HTTP, including sign-in with the CSRF header.
 - Sign-in via `POST /api/v1/auth/login`; the session id changes at sign-in (fixation protection) and the CSRF token
   rotates. Sign-out invalidates the session.
 - Passwords hashed with BCrypt (cost 12). No plaintext or default production passwords in the repository.
 - Sign-in throttling: 5 failed attempts per account (30 per client address) within 15 minutes → HTTP 429. Same
   generic error for unknown accounts, wrong passwords and disabled accounts.
 - Demo accounts are created only when `APP_SEED_DEMO_DATA=true`, with the password from `APP_SEED_DEMO_PASSWORD`
-  (seeding is skipped if it is missing or shorter than 12 characters). The `local` development profile ships a
-  documented dev-only default so the project runs out of the box; it is not used by the `prod` profile.
+  Seeding is skipped, with a log warning, unless the password has at least 12 characters, mixes at least three of
+  lowercase, uppercase, digits and symbols, and is not the dev password documented in the README. The `local`
+  development profile and the local Docker stack may use that documented dev-only default
+  (`APP_SEED_DEMO_ALLOW_DOCUMENTED_PASSWORD`) so the project runs out of the box. A hosted `prod` deployment cannot
+  use it.
 
 ## CSRF
 
@@ -57,12 +63,15 @@ findings, references, status. All are derived on the server.
 - Allowed: PDF, PNG, JPEG — identified by **magic bytes**; the declared content type is ignored and the extension must
   match the detected type.
 - Limits: 5 MB per file (HTTP 413), 10 files per claim, empty files rejected.
-- Stored under a random UUID key in a directory outside any static/web path (or, later, a private blob container).
+- Stored under a random UUID key, either in a directory outside any static/web path (`local`) or in the
+  `attachment_blobs` table (`database`, used for free hosting). Database rows can only be committed together with
+  their metadata row (deferred foreign key) and cannot be updated afterwards (trigger).
   Original filenames are sanitised (path and control characters removed) and only used for display/download names.
   Storage keys never appear in API responses.
 - Downloads are streamed only after the same visibility check as the claim, with `Content-Disposition: attachment`,
   `X-Content-Type-Options: nosniff`, `Cache-Control: private, no-store` and a sandboxing CSP.
-- If the database transaction fails, the stored bytes are deleted.
+- If the database transaction fails, the stored bytes are deleted (local mode) or rolled back with it (database
+  mode).
 - **No malware scanning** is performed. Until scanning and further controls exist, evidence must be synthetic test
   files only.
 
@@ -70,6 +79,9 @@ findings, references, status. All are derived on the server.
 
 - Status transitions validated in one place; illegal transitions are 409.
 - Optimistic locking (`version`) on claims; staff actions and draft saves must send the version they saw.
+- Every state-changing claim operation first takes a row lock on the claim (`SELECT ... FOR UPDATE`), so concurrent
+  writers are serialised and the losers get 409 instead of a database deadlock. Covered by a test that races six
+  adjusters 20 times.
 - Audit events are written in the same transaction as the change they describe (`AuditService` requires an existing
   transaction). Events, findings and notes are append-only, enforced by database triggers as well as code.
 - Policy snapshots are immutable once captured (database trigger).
@@ -121,6 +133,6 @@ cookies, request bodies, file contents.
   needs sticky sessions or a shared session store first.
 - Disabling an account blocks new sign-ins; an existing session continues until it expires or signs out.
 - No multi-factor authentication, password reset or self-service registration (demo accounts are provisioned).
-- Azure Blob storage for evidence is a placeholder; hosted deployments must use a private mounted volume until it is
-  implemented.
+- Azure Blob storage for evidence is a placeholder. Hosted deployments use `database` mode or a private mounted
+  volume.
 - No formal penetration test or compliance assessment has been performed.

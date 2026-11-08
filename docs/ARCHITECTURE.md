@@ -2,7 +2,7 @@
 
 ClaimWillow is a **modular monolith**: one Spring Boot application owns the REST API, business rules and
 persistence, and serves the compiled React single-page app from the same origin. One PostgreSQL database stores all
-claim data; evidence bytes live in private storage behind an interface.
+claim data; evidence bytes live in private storage behind an interface (a private volume, or PostgreSQL itself).
 
 ## System context
 
@@ -24,7 +24,7 @@ flowchart LR
     end
 
     DB[("PostgreSQL 16<br/>Flyway-managed schema")]
-    FILES[("Private evidence storage<br/>local volume · Azure placeholder")]
+    FILES[("Private evidence storage<br/>local volume · PostgreSQL table · Azure placeholder")]
 
     UI -- "HTTPS, same origin<br/>session cookie + X-XSRF-TOKEN" --> SEC
     REPO --> DB
@@ -44,7 +44,7 @@ still talks to a single origin and the session/CSRF cookies behave exactly as in
 | `claim` | Claim aggregate, state machine, drafts and submission, policy snapshot, staff queue and lifecycle actions, response DTOs, server-computed `availableActions` |
 | `validation` | Rules R1–R6 (`RuleCode`, `ClaimRules`), rule engine, persisted findings per validation run, rule catalog |
 | `note` | Request/response/decision/internal notes (append-only) |
-| `attachment` | `AttachmentStorage` interface, local filesystem implementation, Azure placeholder, magic-byte validation, upload/download |
+| `attachment` | `AttachmentStorage` interface with local filesystem and PostgreSQL (`attachment_blobs`) implementations plus an Azure placeholder, magic-byte validation, upload/download |
 | `audit` | Append-only `claim_events`, `AuditService` (requires an existing transaction) |
 | `report` | Status summary and CSV export |
 | `seed` | Opt-in synthetic demo data, created through the real services |
@@ -135,9 +135,24 @@ erDiagram
 
 - PostgreSQL for all structured data: transactional, constraint-rich (CHECKs, FKs, triggers), supported by Flyway
   and by Azure Database for PostgreSQL.
-- Evidence bytes outside the database, behind `AttachmentStorage`. The local filesystem implementation suits
-  development and single-node hosting with a persistent volume; the Azure Blob implementation is a deliberate
-  fail-fast placeholder until cloud resources exist (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+- Evidence bytes behind `AttachmentStorage`, selected by `ATTACHMENT_STORAGE_MODE`:
+  - `local`: a private directory on a persistent volume. Used for development and the local Docker stack.
+  - `database`: the `attachment_blobs` table (migration V5). Used for hosts without a persistent disk, such as the
+    free Render web service. Properties:
+    - Rows are keyed by the same random storage key as `claim_attachments`, and the bytes are written in the
+      upload's own transaction, so metadata and content commit or roll back together.
+    - The foreign key to `claim_attachments.storage_key` is `DEFERRABLE INITIALLY DEFERRED`. It is checked at
+      commit, so bytes can never be committed without their metadata row.
+    - The key uses `ON DELETE CASCADE`, so if metadata is ever removed (for example in a demo reset), its bytes go
+      with it.
+    - A trigger rejects `UPDATE`, so stored evidence is immutable, in line with the append-only audit tables.
+    - The column uses `STORAGE EXTERNAL`, so already-compressed PDF/PNG/JPEG files are not recompressed.
+    - Files are at most 5 MB and 10 per claim, which keeps a free database tier comfortably sized. Evidence is also
+      covered by the ordinary database backups.
+  - `azure`: a deliberate fail-fast placeholder until cloud resources exist (see [DEPLOYMENT.md](DEPLOYMENT.md)).
+- Concurrency: every state-changing claim operation first loads the claim with `SELECT ... FOR UPDATE`. Concurrent
+  writers queue on that row lock rather than deadlocking on the foreign-key locks taken by the events, notes and
+  attachments they insert. The `@Version` check then turns the losing request into a clean 409.
 
 ## Frontend
 
