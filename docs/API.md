@@ -94,6 +94,25 @@ Every response carries `X-Request-Id`; the same id appears in server logs.
 
 Sort values: `submittedAt,desc` (default), `submittedAt,asc`, `updatedAt,desc`, `estimatedLoss,desc`.
 
+### Evidence
+| Method | Path | Who | Notes |
+| --- | --- | --- | --- |
+| GET | `/claims/{id}/attachments` | owner or staff | metadata only (`id, filename, contentType, sizeBytes, uploadedBy, createdAt, downloadUrl`); storage keys are never returned |
+| POST | `/claims/{id}/attachments` | owner (DRAFT, NEEDS_INFO); staff (open claims) | `multipart/form-data`, field `file`; PDF/PNG/JPEG by magic bytes, 5 MB, 10 per claim; 413/415/409 |
+| GET | `/claims/{id}/attachments/{attachmentId}` | owner or staff (non-draft) | streamed with `Content-Disposition: attachment`, `nosniff` |
+
+### Reports (ADJUSTER or ADMIN)
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/staff/reports/summary?submittedFrom=&submittedTo=` | counts and estimated totals per status (drafts excluded) |
+| GET | `/staff/reports/claims.csv?status=&submittedFrom=&submittedTo=` | CSV, newest first, max 10,000 rows, formula-safe |
+
+### Admin (ADMIN)
+| Method | Path | Notes |
+| --- | --- | --- |
+| GET | `/admin/users` | all accounts (no password hashes) |
+| PATCH | `/admin/users/{id}` | `{enabled: true\|false}`; not your own account |
+
 ### Decision example
 
 ```http
