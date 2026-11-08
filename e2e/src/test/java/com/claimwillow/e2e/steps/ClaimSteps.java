@@ -345,7 +345,7 @@ public class ClaimSteps {
 
     @When("the visitor signs in as {string}")
     public void visitorSignsIn(String actor) {
-        world.byTestId("login-email").sendKeys(world.email(actor));
+        world.byTestId("login-username").sendKeys(world.username(actor));
         world.byTestId("login-password").sendKeys(AppUnderTest.DEMO_PASSWORD);
         world.clickable("login-submit").click();
     }

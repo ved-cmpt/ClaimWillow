@@ -22,7 +22,7 @@ Feature: Adjuster review
     Then the claim shows status "Needs info"
 
   Scenario: 6. Adjuster approves a claim with a decision note and closes it
-    Given "Elena" has submitted a claim
+    Given "Priya" has submitted a claim
     And the claim is in review with "Dana"
     And "Dana" is signed in
     When she opens the claim
