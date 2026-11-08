@@ -1,6 +1,8 @@
 spring:
   application:
     name: claimwillow
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5434/claimwillow}
     username: ${SPRING_DATASOURCE_USERNAME:claimwillow}
@@ -25,6 +27,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  shutdown: graceful
   forward-headers-strategy: framework
   error:
     include-message: never
