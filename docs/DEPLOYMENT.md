@@ -6,12 +6,15 @@ React app, served by Spring Boot, with the API under `/api/v1`. Evidence files c
 
 This guide is written for the repository owner and has three paths:
 
-- **Section 3, Free hosting: Render + Neon.** This is the primary path. A free Render web service runs the Docker
-  image and a free Neon project provides PostgreSQL. `render.yaml` at the repository root describes the service.
+- **Section 3, Free hosting: Render + Neon.** This is the primary path and the **live deployment**. A free Render
+  web service runs the Docker image and a free Neon project provides PostgreSQL. `render.yaml` at the repository
+  root describes the service.
 - **Section 4, Azure Container Apps.** The alternative for a paid, always-on deployment.
 - **Section 5, Other hosts.** Any container host with HTTPS and a managed PostgreSQL database.
 
-Nothing has been deployed yet, and the README does not list a hosted URL until one exists.
+**Live deployment:** https://claimwillow.onrender.com (Render free web service `claimwillow`, Neon free PostgreSQL,
+`ATTACHMENT_STORAGE_MODE=database`). It holds synthetic data only, and its demo password is published in the README
+on purpose. Section 3.9 covers resetting the demo data and changing that password.
 
 > Free plans change. Read each provider's current free-plan terms before you sign up. The limits quoted in section
 > 3 come from the providers' documentation at the time of writing.
@@ -71,7 +74,7 @@ Verified locally:
 - With `--memory=512m` and `ATTACHMENT_STORAGE_MODE=database` the image starts, reports UP and passes the same
   lifecycle at both 0.5 and 0.1 CPU. Evidence survives replacing the container. Measurements are in section 3.8.
 
-## 3. Free hosting: Render + Neon (primary path)
+## 3. Free hosting: Render + Neon (live deployment)
 
 What you get:
 
@@ -188,8 +191,9 @@ Open `https://<service-name>.onrender.com` (the URL is at the top of the service
 7. In the browser's developer tools (Application → Cookies), `CLAIMWILLOW_SESSION` must be marked Secure and
    HttpOnly.
 
-When every check passes, add the URL to the README's "Live demo" section. Do not publish the demo password in the
-repository. Share it with reviewers directly.
+When every check passes, add the URL to the README's "Live demo" section. The live demo publishes its password in
+the README because the instance holds only synthetic data. If a deployment ever holds anything else, keep its
+password out of the repository.
 
 ### 3.7 Cold starts and free-plan limits
 
@@ -240,6 +244,61 @@ estimates.
 | `Demo seeding requested but skipped` | The demo password fails the rules in 3.1. |
 | Deploy times out before going live | The first start at 0.1 CPU is slow. Redeploy once. If it repeats, check the log for an earlier error. |
 | `Terminating due to java.lang.OutOfMemoryError` | Unexpected at demo load. Check for very large uploads, or lower `-XX:MaxRAMPercentage` through `JAVA_TOOL_OPTIONS`. |
+
+### 3.9 Live demo maintenance: reset data, change the password
+
+**How the seed treats passwords.** The seed only creates *missing* accounts, policies and claims. When a demo
+account already exists it is not touched, and **neither is its password**. Changing `APP_SEED_DEMO_PASSWORD` and
+redeploying therefore changes nothing for the existing accounts. The new value is used only for accounts the seed
+creates later, for example after a reset. Pick one of the two ways below.
+
+**Reset the demo data** (wipes every claim, note, evidence file and account, then re-seeds):
+
+1. In the Neon console, open the project → **SQL Editor**, choose the database the app uses, and run:
+
+   ```sql
+   DROP SCHEMA public CASCADE;
+   CREATE SCHEMA public;
+   ```
+
+   This deletes everything in that database. Check the project and database name first, and run it only on a
+   database that holds synthetic data.
+2. In Render, open the `claimwillow` service → **Manual Deploy** → **Restart service** (or **Deploy latest commit**).
+3. In **Logs**, expect Flyway applying migrations `1` to `5`, then
+   `Synthetic demo data is present (idempotent seed complete).` The accounts now use the current
+   `APP_SEED_DEMO_PASSWORD`.
+
+**Change the demo password with a reset** (the simplest way):
+
+1. Choose a new password that meets the rules in 3.1 (12+ characters, three of lowercase, uppercase, digits and
+   symbols, not the dev password).
+2. In Render → **Environment**, set `APP_SEED_DEMO_PASSWORD` to it and save. Render redeploys. The existing
+   accounts still use the old password at this point.
+3. Reset the demo data as above. The re-created accounts use the new password.
+4. Update the password in the README's "Live demo" section through a pull request.
+
+**Change the demo password and keep the data** (updates the stored BCrypt hashes in place):
+
+1. Do steps 1 and 2 above first, so a future reset or re-seed uses the same value.
+2. In the Neon **SQL Editor**, run (replace the password; keep the quotes):
+
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS pgcrypto;
+   UPDATE users
+      SET password_hash = crypt('<new demo password>', gen_salt('bf', 12)),
+          updated_at = now()
+    WHERE email IN ('priya@example.com', 'marcus@example.com', 'elena@example.com',
+                    'dana.adjuster@example.com', 'sam.adjuster@example.com', 'admin@example.com');
+   ```
+
+   It must report `UPDATE 6`. `pgcrypto` writes `$2a$12$...` BCrypt hashes, the format the app's
+   `BCryptPasswordEncoder(12)` checks. The `users` table has no append-only trigger, so the update is allowed, and
+   no claim or audit row changes. The SQL editor bypasses the password rules in 3.1, so check the new value
+   against them yourself.
+3. Sign in once as `priya@example.com` with the new password to confirm, then update the README through a pull
+   request.
+4. Sessions live in memory, so anyone already signed in stays signed in until the service restarts. Restart it from
+   **Manual Deploy** to end them.
 
 ## 4. Alternative: Azure Container Apps + Azure Database for PostgreSQL
 
@@ -364,14 +423,15 @@ downgrade authentication or storage privacy to make a host work.
 
 1. Create a new database password (or a second application role).
 2. Update the `db-password` secret, then restart/redeploy the app.
-3. Revoke the old credential. Rotate `APP_SEED_DEMO_PASSWORD` the same way (existing seeded accounts keep their old
-   password until they are re-created; reset demo data below).
+3. Revoke the old credential. Rotate `APP_SEED_DEMO_PASSWORD` the same way. Existing seeded accounts keep their
+   old password; see section 3.9 for the two ways to change it.
 
 ### Resetting synthetic demo data
 
 The seed only creates missing accounts, policies and claims. To fully reset a demo database, restore it from a clean
 backup or drop and recreate the `claimwillow` database (Flyway rebuilds the schema and the seed repopulates it on the
 next start with `APP_SEED_DEMO_DATA=true`). Never run this against a database holding anything but synthetic data.
+For the live Render + Neon demo, follow the exact steps in section 3.9.
 
 ### Monitoring
 
