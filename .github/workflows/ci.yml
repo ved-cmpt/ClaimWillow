@@ -24,7 +24,7 @@ jobs:
         run: ./mvnw -B verify
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-test-reports
           path: |
@@ -79,7 +79,7 @@ jobs:
         run: ./mvnw -B test
       - name: Upload Cucumber report, screenshots and app log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: e2e-results
           path: |
