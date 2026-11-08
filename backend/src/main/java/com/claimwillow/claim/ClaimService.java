@@ -149,7 +149,8 @@ public class ClaimService {
         claim.moveTo(ClaimStatus.IN_REVIEW, now);
         String summary = "Policyholder responded"
                 + (text.isEmpty() ? "" : ": " + StaffClaimService.abbreviate(text))
-                + (newEvidence > 0 ? " (" + newEvidence + " new attachment(s))" : "") + ".";
+                + (newEvidence > 0 ? " (" + newEvidence + " new attachment(s))" : "");
+        summary = summary.matches(".*[.!?]$") ? summary : summary + ".";
         audit.record(claim, owner.id(), EventType.RESPONSE_SUBMITTED, ClaimStatus.NEEDS_INFO, ClaimStatus.IN_REVIEW,
                 summary, EventVisibility.ALL, Map.of("newAttachments", newEvidence));
         List<ClaimFinding> findings = ruleEngine.runAndStore(claim);

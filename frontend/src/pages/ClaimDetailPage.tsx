@@ -7,6 +7,9 @@ import { Alert, Card, CardHeader, EmptyState } from '../components/ui';
 import { Spinner } from '../components/Spinner';
 import { useCurrentUser } from '../features/auth/useAuth';
 import { FactsCard, FindingsCard, SnapshotCard, TimelineCard } from '../features/claims/ClaimSections';
+import { NotesCard } from '../features/claims/NotesCard';
+import { OwnerResponseCard } from '../features/claims/OwnerResponseCard';
+import { StaffReviewPanel } from '../features/claims/StaffReviewPanel';
 
 export function ClaimDetailPage() {
   const { id } = useParams();
@@ -27,9 +30,10 @@ export function ClaimDetailPage() {
   if (c.status === 'DRAFT' && c.availableActions.includes('EDIT_DRAFT')) {
     return <Navigate to={`/claims/${c.id}/edit`} replace />;
   }
+  const refresh = () => { void claim.refetch(); };
 
   return (
-    <div data-testid="claim-detail" data-claim-id={c.id}>
+    <div data-testid="claim-detail" data-claim-id={c.id} data-version={c.version}>
       <div className="mb-6">
         <Link to={staff ? '/staff/queue' : '/claims'} className="text-sm text-accent hover:underline">
           ← {staff ? 'Work queue' : 'My claims'}
@@ -41,8 +45,9 @@ export function ClaimDetailPage() {
         <p className="mt-1 text-ink-muted" data-testid="claim-title">{c.title}</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="flex min-w-0 flex-col gap-6">
+          {!staff && <OwnerResponseCard claim={c} onRefresh={refresh} />}
           <Card>
             <CardHeader title="What happened" />
             <p className="whitespace-pre-wrap px-5 py-4 text-sm text-ink" data-testid="claim-description">
@@ -50,9 +55,11 @@ export function ClaimDetailPage() {
             </p>
           </Card>
           <FindingsCard claim={c} />
+          <NotesCard claim={c} staff={staff} />
           <TimelineCard claimId={c.id} />
         </div>
-        <aside className="flex flex-col gap-6" aria-label="Claim facts">
+        <aside className="flex flex-col gap-6 lg:sticky lg:top-4 lg:self-start" aria-label="Claim facts and actions">
+          {staff && <StaffReviewPanel claim={c} onRefresh={refresh} />}
           <FactsCard claim={c} showOwner={staff} />
           <SnapshotCard claim={c} />
         </aside>
