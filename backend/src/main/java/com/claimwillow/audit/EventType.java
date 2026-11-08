@@ -1,0 +1,16 @@
+package com.claimwillow.audit;
+
+public enum EventType {
+    DRAFT_CREATED,
+    SUBMITTED,
+    VALIDATION_RUN,
+    ASSIGNED,
+    REVIEW_STARTED,
+    INFO_REQUESTED,
+    RESPONSE_SUBMITTED,
+    REVIEW_RESUMED,
+    DECISION_RECORDED,
+    CLOSED,
+    NOTE_ADDED,
+    ATTACHMENT_ADDED
+}
