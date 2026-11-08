@@ -1,8 +1,11 @@
 import { Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ClaimDetailPage } from './pages/ClaimDetailPage';
+import { ClaimFormPage } from './pages/ClaimFormPage';
 import { HomeRedirect } from './pages/HomeRedirect';
 import { LoginPage } from './pages/LoginPage';
+import { MyClaimsPage } from './pages/MyClaimsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { PoliciesPage } from './pages/PoliciesPage';
@@ -15,9 +18,12 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route element={<ProtectedRoute roles={['POLICYHOLDER']} />}>
-            <Route path="/claims" element={<PlaceholderPage title="My claims" />} />
+            <Route path="/claims" element={<MyClaimsPage />} />
+            <Route path="/claims/new" element={<ClaimFormPage />} />
+            <Route path="/claims/:id/edit" element={<ClaimFormPage />} />
             <Route path="/policies" element={<PoliciesPage />} />
           </Route>
+          <Route path="/claims/:id" element={<ClaimDetailPage />} />
           <Route element={<ProtectedRoute roles={['ADJUSTER', 'ADMIN']} />}>
             <Route path="/staff/queue" element={<PlaceholderPage title="Work queue" />} />
           </Route>
