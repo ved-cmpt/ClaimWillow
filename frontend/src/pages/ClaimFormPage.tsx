@@ -10,6 +10,7 @@ import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { formatDate, formatMoney, todayIso } from '../lib/format';
 import { usePolicies } from './PoliciesPage';
+import { EvidenceList } from '../features/attachments/EvidenceSection';
 
 export interface ClaimFormValues {
   policyId: string;
@@ -240,8 +241,10 @@ export function ClaimForm({ draft, policies, policiesLoading = false }: ClaimFor
           </Section>
 
           <Section number={3} title="Evidence">
-            <p className="text-sm text-ink-muted">Evidence uploads (photos, receipts, reports) are added in a later
-              release of this screen.</p>
+            {claimId
+              ? <EvidenceList claimId={claimId} canUpload />
+              : <p className="text-sm text-ink-muted" data-testid="evidence-save-first">Save the draft first, then
+                  attach photos, receipts or reports (PDF, PNG or JPEG, up to 5 MB each).</p>}
           </Section>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -278,7 +281,7 @@ interface ReviewPanelProps {
   onSubmit: () => void;
 }
 
-function ReviewPanel({ values, policy, busy, onBack, onSubmit }: ReviewPanelProps) {
+function ReviewPanel({ values, policy, claimId, busy, onBack, onSubmit }: ReviewPanelProps) {
   const shortDescription = values.description.trim().length < MIN_DESCRIPTION;
   const rows: [string, string][] = [
     ['Policy', policy ? `${policy.policyNumber} · ${policy.insuredAddress}` : '—'],
@@ -301,6 +304,12 @@ function ReviewPanel({ values, policy, busy, onBack, onSubmit }: ReviewPanelProp
           <dt className="text-sm text-ink-faint">Description</dt>
           <dd className="whitespace-pre-wrap text-sm text-ink">{values.description}</dd>
         </dl>
+        {claimId && (
+          <div>
+            <h3 className="mb-2 text-sm font-medium text-ink-faint">Evidence</h3>
+            <EvidenceList claimId={claimId} canUpload={false} compact />
+          </div>
+        )}
         {shortDescription && (
           <Alert tone="info" title="Tip: more detail helps">
             Descriptions under {MIN_DESCRIPTION} characters are flagged for more information. You can still submit.
