@@ -1,16 +1,63 @@
 name: CI
 
+# Every pull request and every push to main runs this workflow, so the single required check
+# "ci-ok" always reports. Which jobs actually run depends on the changed files (see "changes"):
+#   - documentation only (**/*.md, docs/**, LICENSE): every job is skipped, ci-ok passes;
+#   - any other change: backend verify and frontend lint/test/build run;
+#   - backend/, frontend/, e2e/, Dockerfile or this workflow: the browser suite and image build run too.
+# Workflow-level paths-ignore is not used on purpose: a workflow that never starts leaves a
+# required check pending forever.
 on:
   push:
-    branches: [main, "phase-*"]
+    branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      app: ${{ steps.filter.outputs.app }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Classify changed files
+        id: filter
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then base="$PR_BASE"; else base="$PUSH_BEFORE"; fi
+          if [ -z "$base" ] || ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+            echo "No comparable base commit; running every job."
+            { echo "code=true"; echo "app=true"; } >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files="$(git diff --name-only "$base" HEAD)"
+          echo "Changed files:"; echo "$files"
+          code=false; app=false
+          if echo "$files" | grep -qvE '(\.md$|^docs/|^LICENSE$)'; then code=true; fi
+          if echo "$files" | grep -qE '^(backend/|frontend/|e2e/|Dockerfile$|\.dockerignore$|\.github/workflows/ci\.yml$)'; then
+            app=true
+          fi
+          echo "code=$code app=$app"
+          { echo "code=$code"; echo "app=$app"; } >> "$GITHUB_OUTPUT"
+
   backend:
     name: Backend (unit + integration)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -34,6 +81,8 @@ jobs:
 
   frontend:
     name: Frontend (lint + test + build)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -52,8 +101,10 @@ jobs:
 
   e2e:
     name: Browser acceptance tests (Cucumber + Selenium)
+    # Runs in parallel with the quick jobs; ci-ok still requires all of them.
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -91,8 +142,9 @@ jobs:
 
   docker:
     name: Production image build
+    needs: changes
+    if: needs.changes.outputs.app == 'true'
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v7
       - name: Build image (frontend + backend, multi-stage)
@@ -117,3 +169,23 @@ jobs:
       - name: Container logs
         if: always()
         run: docker logs cw-app || true
+
+  ci-ok:
+    # The only check branch protection requires. Passes when every job either succeeded or was
+    # skipped because its files did not change; fails on any failure or cancellation.
+    name: ci-ok
+    if: always()
+    needs: [changes, backend, frontend, e2e, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check job results
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            case "$r" in
+              success|skipped) ;;
+              *) echo "A CI job ended with: $r"; exit 1 ;;
+            esac
+          done
