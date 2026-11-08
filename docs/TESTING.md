@@ -112,24 +112,40 @@ cd e2e && ./mvnw test
 ```
 
 Options: `E2E_HEADLESS=false` shows the browsers; `E2E_BASE_URL=http://localhost:8080` runs against an already
-running instance (it must have been seeded with `APP_SEED_DEMO_PASSWORD` equal to `E2E_DEMO_PASSWORD`).
+running instance. The suite signs in with the demo usernames and `E2E_DEMO_PASSWORD`, which defaults to the
+public demo password `demo1234` (the instance must be seeded with the same `APP_SEED_DEMO_PASSWORD`).
 
 One date input is filled through the browser's native value setter plus an `input` event, because typing into
 `<input type="date">` depends on the OS locale; every other interaction is a real click or keystroke.
 
 ## CI
 
-`ci.yml` runs on pushes to `main`/`phase-*` and on pull requests:
+`ci.yml` runs on every pull request and every push to `main`. A first **changes** job classifies the changed files,
+and the other jobs run only when they are relevant:
+
+| Changed files | Jobs that run |
+| --- | --- |
+| documentation only (`**/*.md`, `docs/**`, `LICENSE`) | none (all skipped) |
+| anything else | backend, frontend |
+| `backend/`, `frontend/`, `e2e/`, `Dockerfile`, `.dockerignore` or `ci.yml` | backend, frontend, e2e, docker |
 
 1. **backend** — `./mvnw -B verify` (unit + integration); uploads surefire/failsafe reports.
 2. **frontend** — `npm ci`, `npm run lint`, `npm run test -- --run`, `npm run build`.
 3. **e2e** — builds the frontend and jar, runs the Cucumber suite, uploads the HTML report, screenshots and app log.
+   Runs in parallel with the quick jobs.
 4. **docker**: builds the production image and smoke-tests it against a throwaway database with the free-hosting
    settings (`--memory=512m`, `ATTACHMENT_STORAGE_MODE=database`): health and readiness UP, SPA served, memory
    printed. Startup time and memory at 512 MB, measured locally, are in
    [DEPLOYMENT.md section 3.8](DEPLOYMENT.md#38-sizing-and-troubleshooting).
 
+5. **ci-ok** — always runs last and passes only if every other job succeeded or was skipped. It is the single check
+   branch protection requires, so a docs-only pull request is not left waiting for jobs that never start (which is
+   why the workflow does not use a workflow-level `paths-ignore`).
+
 A failing job fails the workflow; no step is marked "continue on error".
+
+Dependabot opens at most one grouped pull request per ecosystem (Maven, npm, GitHub Actions, Docker) per monthly run
+([.github/dependabot.yml](../.github/dependabot.yml)).
 
 ## Latest local results
 
@@ -138,9 +154,9 @@ Recorded from actual runs on the development machine (Windows 11, Java 21, Node 
 | Layer | Result |
 | --- | --- |
 | Backend unit | 75 passed, 0 failed |
-| Backend integration | 56 passed, 0 failed (including database-mode attachments and the HTTPS proxy check) |
-| Frontend | 29 passed, 0 failed |
+| Backend integration | 60 passed, 0 failed (including database-mode attachments, the HTTPS proxy check and the username migration on existing data) |
+| Frontend | 30 passed, 0 failed |
 | Browser acceptance | 10 scenarios / 96 steps passed |
 
-The same four CI jobs (backend, frontend, e2e, docker) run on GitHub Actions for every push and pull request; see
-the repository's Actions tab for the latest runs.
+The same jobs (backend, frontend, e2e, docker, gated by the changed files) run on GitHub Actions for pull requests
+and pushes to `main`; see the repository's Actions tab for the latest runs.

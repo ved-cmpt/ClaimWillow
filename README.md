@@ -14,16 +14,15 @@ browser tests.
 **https://claimwillow.onrender.com** runs on Render's free plan, with the database on a free Neon PostgreSQL project
 ([render.yaml](render.yaml), [deployment guide](docs/DEPLOYMENT.md#3-free-hosting-render--neon-live-deployment)).
 
-Shared password for every demo account: **`Willow-Live-2026-Demo!`**
+Sign in with a username and the shared password **`demo1234`**. The sign-in page lists the same accounts.
 
-| Email | Role | What to try |
-| --- | --- | --- |
-| `priya@example.com` | Policyholder | Submit a new claim, answer an information request, follow the status and history |
-| `marcus@example.com` | Policyholder | See a claim waiting for more information and a closed claim; a link to one of Priya's claims shows "not found" |
-| `elena@example.com` | Policyholder | See an over-limit claim and the rule findings that explain it |
-| `dana.adjuster@example.com` | Adjuster | Work the queue: assign, review, request information, approve or reject, close |
-| `sam.adjuster@example.com` | Adjuster | Try to act on Dana's claim and see the server refuse it |
-| `admin@example.com` | Administrator | Reassign claims, see reports and the CSV export, enable or disable accounts |
+| Username | Password | Role | What to try |
+| --- | --- | --- | --- |
+| `priya` | `demo1234` | Policyholder | Submit a new claim, answer an information request, follow the status and history |
+| `marcus` | `demo1234` | Policyholder | A claim waiting for more information, a closed claim and an over-limit claim with the rule findings that explain it; a link to one of Priya's claims shows "not found" |
+| `dana` | `demo1234` | Adjuster | Work the queue: assign, review, request information, approve or reject, close |
+| `sam` | `demo1234` | Adjuster | Try to act on Dana's claim and see the server refuse it |
+| `admin` | `demo1234` | Administrator | Reassign claims, see reports and the CSV export, enable or disable accounts |
 
 > **Synthetic data only.** Every account, policy and claim is fictional, and the password is public on purpose. Do not
 > enter real personal information or upload real documents. The demo data may be reset at any time.
@@ -34,12 +33,12 @@ Shared password for every demo account: **`Willow-Live-2026-Demo!`**
 
 ### Try it in 3 minutes
 
-1. Sign in as **Priya**. Choose **New claim**, pick policy HC-100421, fill in the incident, a title, a description
+1. Sign in as **`priya`** / `demo1234`. Choose **New claim**, pick policy HC-100421, fill in the incident, a title, a description
    and an estimate, then **Review claim** → **Submit claim**. Note the reference and the automated checks.
-2. Sign out and sign in as **Dana**. Find the claim in the **Work queue**, open it, then **Assign to me** →
+2. Sign out and sign in as **`dana`**. Find the claim in the **Work queue**, open it, then **Assign to me** →
    **Start review** → **Request more information** with a short message.
-3. Sign in as **Priya** again. Open the claim, write a response (attach a small PNG or PDF if you like) and send it.
-4. Sign in as **Dana**. Read the response, **Record a decision** → Approve with a note, then **Close claim**. The
+3. Sign in as **`priya`** again. Open the claim, write a response (attach a small PNG or PDF if you like) and send it.
+4. Sign in as **`dana`**. Read the response, **Record a decision** → Approve with a note, then **Close claim**. The
    **History** panel lists every step with its actor and time.
 
 ![Adjuster review screen](docs/screenshots/06-staff-review.png)
@@ -145,21 +144,22 @@ npm run dev                                     # http://localhost:5173 (proxies
 
 The Vite dev server proxies `/api` to Spring Boot, so the browser sees one origin: the session cookie and the
 `XSRF-TOKEN` cookie work exactly as in production. The `local` profile connects to the Docker database and seeds the
-synthetic demo data (idempotent; existing rows are left alone).
+synthetic demo data (idempotent: policies and claims are created once; the five demo accounts get their name, role
+and password re-applied on every start).
 
-### Demo accounts (local development and the local Docker stack only)
+### Demo accounts
 
-Password for every account: `Willow-Demo-2026!` (a documented dev-only default from `application-local.yml` and
-`docker-compose.yml`; hosted environments must set their own `APP_SEED_DEMO_PASSWORD`).
+The same five accounts as the live demo. Password for every account: `demo1234`, the default in
+`application-local.yml` and `docker-compose.yml`. A hosted `prod` deployment sets it with `APP_SEED_DEMO_PASSWORD`
+(seeding is skipped if it is missing or shorter than 8 characters; see [docs/SECURITY.md](docs/SECURITY.md)).
 
-| Role | Email | Notes |
+| Username | Role | Seeded data |
 | --- | --- | --- |
-| Policyholder | `priya@example.com` | Two policies (one expired), claims in several states, one draft |
-| Policyholder | `marcus@example.com` | A claim waiting for more information, a closed claim |
-| Policyholder | `elena@example.com` | An over-limit claim in the queue |
-| Adjuster | `dana.adjuster@example.com` | Has claims in review |
-| Adjuster | `sam.adjuster@example.com` | |
-| Admin | `admin@example.com` | Account screen, reassignment |
+| `priya` | Policyholder | Two policies (one expired), claims in several states, one draft |
+| `marcus` | Policyholder | Two policies; a claim waiting for more information, a closed claim, an over-limit claim in the queue |
+| `dana` | Adjuster | Has claims in review |
+| `sam` | Adjuster | Closed one of the claims |
+| `admin` | Admin | Account screen, reassignment |
 
 ### Configuration
 
@@ -174,23 +174,24 @@ only) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Main ones: `SPRING_PROFILES_
 | Layer | Command | Latest local result |
 | --- | --- | --- |
 | Backend unit | `cd backend && ./mvnw test` | 75 passed |
-| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 56 passed |
-| Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 29 passed, build ok |
+| Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 60 passed |
+| Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 30 passed, build ok |
 | Browser acceptance (Cucumber + Selenium) | build jar and frontend, then `cd e2e && ./mvnw test` | 10 scenarios, 96 steps passed |
 
 Integration and browser tests start their own disposable PostgreSQL containers (Docker required) and never touch the
 development database. The browser suite boots the real backend jar serving the built frontend. Full details,
-scenario list and CI stages: [docs/TESTING.md](docs/TESTING.md). CI runs backend, frontend, browser and Docker image
-jobs on every push and pull request ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
+scenario list and CI stages: [docs/TESTING.md](docs/TESTING.md). CI runs backend and frontend jobs for every code change,
+adds the browser and Docker image jobs when the app or tests change, and skips everything for documentation-only
+changes ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Demo walkthrough (about 4 minutes)
 
-1. **Sign in as Priya** (`priya@example.com`). *My claims* shows counts by status and the list.
+1. **Sign in as Priya** (username `priya`, password `demo1234`). *My claims* shows counts by status and the list.
 2. **New claim** → choose policy HC-100421, set a date, "Damaged", a title, a short description and an estimate of
    `65000`. **Save draft**, refresh the page (the draft is still there), **Review claim** → **Submit claim**.
 3. The claim page shows the reference, *Submitted*, and **Automated checks**: R3 (over the 50,000 limit) and R6
    (short description, no evidence), each explained. **History** shows the submission and the rule run.
-4. **Sign out, sign in as Dana** (`dana.adjuster@example.com`). The **Work queue** shows the new claim; search by its
+4. **Sign out, sign in as Dana** (`dana`). The **Work queue** shows the new claim; search by its
    reference and **Open** it.
 5. **Assign to me** → **Start review** → **Request more information** ("Please upload photos of the damage").
 6. **Sign in as Priya** again: the claim shows the adjuster's request. Attach a PNG or PDF and send a response.

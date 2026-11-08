@@ -16,12 +16,30 @@ security regulation.
 - Passwords hashed with BCrypt (cost 12). No plaintext or default production passwords in the repository.
 - Sign-in throttling: 5 failed attempts per account (30 per client address) within 15 minutes → HTTP 429. Same
   generic error for unknown accounts, wrong passwords and disabled accounts.
-- Demo accounts are created only when `APP_SEED_DEMO_DATA=true`, with the password from `APP_SEED_DEMO_PASSWORD`
-  Seeding is skipped, with a log warning, unless the password has at least 12 characters, mixes at least three of
-  lowercase, uppercase, digits and symbols, and is not the dev password documented in the README. The `local`
-  development profile and the local Docker stack may use that documented dev-only default
-  (`APP_SEED_DEMO_ALLOW_DOCUMENTED_PASSWORD`) so the project runs out of the box. A hosted `prod` deployment cannot
-  use it.
+- Accounts sign in with a **username** (trimmed, case-insensitive, stored in lower case and unique). The email
+  address stays on the account as a profile field and is not a sign-in name.
+- Demo accounts are created only when `APP_SEED_DEMO_DATA=true`, with the shared password from
+  `APP_SEED_DEMO_PASSWORD` (`demo1234` by default in the `local` profile and the local Docker stack; `prod` has no
+  default, so seeding is skipped with a log warning when it is missing).
+
+### Why the demo password is short and public
+
+The five demo accounts (`priya`, `marcus`, `dana`, `sam`, `admin`) exist so anyone can try the live demo, and their
+password `demo1234` is published in the README and on the sign-in page on purpose. Behind them is **synthetic data
+only**. A long, complex secret would protect nothing that is not already public, and it would make the demo harder to
+use. So the check on the seed password is deliberately light: it must be set and have **at least 8 characters**.
+
+That relaxation covers the seeded demo accounts only. Everything else stays as it is:
+
+- the password is still stored as a BCrypt hash (cost 12) and is never logged or returned;
+- sign-in throttling still applies (5 failures per account, 30 per client address in 15 minutes → HTTP 429);
+- CSRF protection, session fixation protection, Secure/HttpOnly/SameSite cookies and every role and ownership check
+  apply to demo accounts exactly as to any other account;
+- the seed re-applies the demo password, name and role on every start, so a visitor cannot keep a demo account
+  locked by changing it (the app has no password change screen anyway).
+
+Never put real data in a database seeded with demo accounts, and never enable `APP_SEED_DEMO_DATA` on a deployment
+that holds real users.
 
 ## CSRF
 
