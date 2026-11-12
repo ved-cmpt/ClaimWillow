@@ -49,6 +49,26 @@ class ScreenshotTour {
 
             WebDriver driver = world.as("Visitor");
             size(1440, 960);
+            world.open("/");
+            world.byTestId("demo-adjuster");
+            world.byTestId("hero-timeline");
+            world.waitForText("hero-timeline", "Closed");
+            shot("00-landing");
+
+            size(390, 844);
+            world.open("/");
+            world.byTestId("demo-policyholder");
+            shot("10-mobile-landing");
+
+            // One-click demo: the landing page button signs in through the normal login API.
+            size(1440, 960);
+            world.open("/");
+            world.clickable("demo-adjuster").click();
+            world.waiting().until(ExpectedConditions.urlContains("/staff/queue"));
+            world.byTestId("queue-table");
+            world.clickable("sign-out").click();
+            world.byTestId("landing");
+
             world.open("/login");
             world.byTestId("login-form");
             shot("01-sign-in");
@@ -91,6 +111,9 @@ class ScreenshotTour {
             world.byTestId("staff-panel");
             world.waiting().until(ExpectedConditions.visibilityOfElementLocated(World.testId("finding")));
             shot("09-mobile-staff-review");
+            world.clickable("open-menu").click();
+            world.waiting().until(ExpectedConditions.elementToBeClickable(World.testId("nav-reports")));
+            shot("11-mobile-navigation");
             driver.manage().window().setSize(new Dimension(1440, 960));
         } finally {
             world.quitAll();

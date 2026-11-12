@@ -78,8 +78,8 @@ export function StaffReviewPanel({ claim, onRefresh }: Props) {
 
   return (
     <Card data-testid="staff-panel">
-      <CardHeader title="Review actions" />
-      <div className="flex flex-col gap-4 p-5">
+      <CardHeader title="Review actions" icon="scale" />
+      <div className="flex flex-col gap-4 p-4 sm:p-5">
         {error && (
           <Alert tone={isConflict ? 'warning' : 'error'} testId="action-error"
             title={isConflict ? 'This claim changed' : 'The action failed'}>

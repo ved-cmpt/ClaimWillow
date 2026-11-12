@@ -3,7 +3,9 @@ import { api, ApiRequestError } from '../api/client';
 import type { Role } from '../api/types';
 import { Pill } from '../components/StatusPill';
 import { useToast } from '../components/Toast';
-import { Alert, Button, Card, PageHeader, SkeletonRows } from '../components/ui';
+import { Avatar } from '../components/AppShell';
+import { rowClass, TableFrame, theadClass } from '../components/Filters';
+import { Alert, Button, PageHeader, SkeletonRows, Th } from '../components/ui';
 import { useCurrentUser } from '../features/auth/useAuth';
 import { formatDateTime } from '../lib/format';
 
@@ -38,35 +40,39 @@ export function AdminUsersPage() {
 
   return (
     <>
-      <PageHeader title="Accounts" subtitle="Synthetic demo accounts. Disabled accounts cannot sign in." />
-      <Card>
+      <PageHeader title="Accounts" icon="users" subtitle="Synthetic demo accounts. Disabled accounts cannot sign in." />
+      <TableFrame>
         {users.isPending && <SkeletonRows rows={6} />}
-        {users.isError && <div className="p-5"><Alert tone="error">Accounts could not be loaded.</Alert></div>}
+        {users.isError && <div className="p-4"><Alert tone="error">Accounts could not be loaded.</Alert></div>}
         {users.data && (
           <table className="w-full text-sm" data-testid="accounts-table">
-            <thead className="hidden border-b border-line bg-subtle text-left text-xs uppercase tracking-wide
-              text-ink-faint md:table-header-group">
+            <thead className={`hidden md:table-header-group ${theadClass}`}>
               <tr>
-                <th scope="col" className="px-5 py-2.5 font-medium">Name</th>
-                <th scope="col" className="px-3 py-2.5 font-medium">Role</th>
-                <th scope="col" className="px-3 py-2.5 font-medium">Status</th>
-                <th scope="col" className="px-3 py-2.5 font-medium">Created</th>
-                <th scope="col" className="px-5 py-2.5"><span className="sr-only">Action</span></th>
+                <Th icon="user" className="pl-5">Name</Th>
+                <Th icon="shield">Role</Th>
+                <Th icon="tag">Status</Th>
+                <Th icon="clock">Created</Th>
+                <Th className="pr-5"><span className="sr-only">Action</span></Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {users.data.map((u) => (
-                <tr key={u.id} className="grid grid-cols-2 gap-2 px-5 py-3 md:table-row md:px-0">
-                  <td className="col-span-2 md:px-5 md:py-3">
-                    <p className="font-medium">{u.displayName}</p>
-                    <p className="text-xs text-ink-faint">{u.username} · {u.email}</p>
+                <tr key={u.id} className={`grid grid-cols-2 gap-2 px-4 py-3 md:table-row md:px-0 ${rowClass}`}>
+                  <td className="col-span-2 md:py-2.5 md:pl-5 md:pr-3">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={u.displayName} />
+                      <div className="min-w-0">
+                        <p className="font-medium">{u.displayName}</p>
+                        <p className="break-all text-xs text-ink-faint">{u.username} · {u.email}</p>
+                      </div>
+                    </div>
                   </td>
-                  <td className="md:px-3 md:py-3">{roleLabel[u.role]}</td>
-                  <td className="md:px-3 md:py-3">
+                  <td className="md:px-3 md:py-2.5">{roleLabel[u.role]}</td>
+                  <td className="md:px-3 md:py-2.5">
                     <Pill tone={u.enabled ? 'success' : 'muted'} label={u.enabled ? 'Active' : 'Disabled'} />
                   </td>
-                  <td className="text-xs text-ink-faint md:px-3 md:py-3">{formatDateTime(u.createdAt)}</td>
-                  <td className="text-right md:px-5 md:py-3">
+                  <td className="text-xs text-ink-faint md:px-3 md:py-2.5">{formatDateTime(u.createdAt)}</td>
+                  <td className="text-right md:py-2.5 md:pl-3 md:pr-5">
                     {u.id !== me.data?.id && (
                       <Button variant="secondary" onClick={() => toggle.mutate(u)}
                         busy={toggle.isPending && toggle.variables?.id === u.id}>
@@ -79,7 +85,7 @@ export function AdminUsersPage() {
             </tbody>
           </table>
         )}
-      </Card>
+      </TableFrame>
     </>
   );
 }

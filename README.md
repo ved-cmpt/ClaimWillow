@@ -14,7 +14,9 @@ browser tests.
 **https://claimwillow.onrender.com** runs on Render's free plan, with the database on a free Neon PostgreSQL project
 ([render.yaml](render.yaml), [deployment guide](docs/DEPLOYMENT.md#3-free-hosting-render--neon-live-deployment)).
 
-Sign in with a username and the shared password **`demo1234`**. The sign-in page lists the same accounts.
+The landing page has three one-click demos: **Try as a policyholder (Priya)**, **Try as an adjuster (Dana)** and
+**Try as an admin**. Each signs in through the normal login API and opens that role's home screen. To use the form
+instead, sign in with a username and the shared password **`demo1234`**; the sign-in page lists the same accounts.
 
 | Username | Password | Role | What to try |
 | --- | --- | --- | --- |
@@ -27,13 +29,13 @@ Sign in with a username and the shared password **`demo1234`**. The sign-in page
 > **Synthetic data only.** Every account, policy and claim is fictional, and the password is public on purpose. Do not
 > enter real personal information or upload real documents. The demo data may be reset at any time.
 
-> **First load can take about a minute.** The free host sleeps after 15 minutes without visitors. The first request
-> after that wakes the service and starts the JVM, which takes about a minute, sometimes a little more. After that
-> it responds normally.
+> **First load can take a minute or two.** The free host sleeps after 15 minutes without visitors. The first request
+> after that wakes the service and starts the JVM, which takes about a minute, sometimes nearly two (one wake-up on
+> 2026-11-12 took 111 s). After that it responds normally.
 
 ### Try it in 3 minutes
 
-1. Sign in as **`priya`** / `demo1234`. Choose **New claim**, pick policy HC-100421, fill in the incident, a title, a description
+1. Open the live demo and choose **Try as a policyholder (Priya)** (or sign in as **`priya`** / `demo1234`). Choose **New claim**, pick policy HC-100421, fill in the incident, a title, a description
    and an estimate, then **Review claim** → **Submit claim**. Note the reference and the automated checks.
 2. Sign out and sign in as **`dana`**. Find the claim in the **Work queue**, open it, then **Assign to me** →
    **Start review** → **Request more information** with a short message.
@@ -41,7 +43,7 @@ Sign in with a username and the shared password **`demo1234`**. The sign-in page
 4. Sign in as **`dana`**. Read the response, **Record a decision** → Approve with a note, then **Close claim**. The
    **History** panel lists every step with its actor and time.
 
-![Adjuster review screen](docs/screenshots/06-staff-review.png)
+![Landing page with one-click demos](docs/screenshots/00-landing.png)
 
 ## The problem
 
@@ -53,12 +55,18 @@ flow in one small, secure web application with tests that prove the rules.
 
 | Role | Can do |
 | --- | --- |
-| **Policyholder** | Save and submit claims against their own policies, attach evidence, answer information requests, follow status and history |
-| **Claims adjuster** | Work the queue, assign claims to themselves, review findings and evidence, request information, approve or reject with a mandatory note, close |
-| **Administrator** | Everything an adjuster can do, reassign claims, enable/disable demo accounts |
+| **Policyholder** | Save and submit claims against their own policies, attach evidence, answer information requests, follow status and history. Anyone else's claim shows "not found" |
+| **Claims adjuster** | Work the queue and reports, take an unassigned claim, add internal notes and evidence to open claims. Start review, request information, approve or reject (with a mandatory note) and close only on claims **assigned to them** |
+| **Administrator** | Queue, reports and notes like an adjuster, plus: take over any open claim, even one assigned to someone else (the API also lets an admin assign it to a named adjuster); close any decided claim; enable or disable accounts. Start review, request information and decide still require being the assigned adjuster |
 
 ## Features
 
+- **Landing page with one-click demos** — how a claim flows, the six rules, the audit/security/testing approach and
+  the stack, with quiet scroll fade-ins and an animated example claim (pausable, and static when the system asks for
+  reduced motion). Demo buttons sign in as Priya, Dana or the admin through the normal login API, CSRF included.
+- **Calm workspace UI** — a role-based sidebar (a drawer on phones), page-style claim screens with breadcrumbs and a
+  property list, rule findings as callouts, a quiet activity feed and database-style tables with compact filters.
+  Self-hosted fonts, WCAG AA colour contrast, visible focus, keyboard-usable controls.
 - **Claim intake** — three-section form (policy · incident and amount · evidence), manual draft save, a review step
   before submission, field-level errors from both the client and the server.
 - **Deterministic rules R1–R6** (no AI): required inputs (blocking), policy active on the incident date, estimate over
@@ -81,14 +89,17 @@ flow in one small, secure web application with tests that prove the rules.
 
 ## Screenshots
 
-Captured from a freshly seeded instance by `e2e/src/test/java/com/claimwillow/e2e/ScreenshotTour.java`.
+Captured from a freshly seeded instance by `e2e/src/test/java/com/claimwillow/e2e/ScreenshotTour.java`, which also
+clicks the adjuster demo button end to end.
 
 | | |
 | --- | --- |
-| ![Sign in](docs/screenshots/01-sign-in.png) Sign in | ![My claims](docs/screenshots/02-my-claims.png) My claims |
-| ![New claim](docs/screenshots/03-new-claim-form.png) New claim form | ![Claim detail](docs/screenshots/04-claim-detail-policyholder.png) Claim detail (policyholder) |
+| ![Landing page](docs/screenshots/00-landing.png) Landing page | ![Sign in](docs/screenshots/01-sign-in.png) Sign in |
+| ![My claims](docs/screenshots/02-my-claims.png) My claims | ![New claim](docs/screenshots/03-new-claim-form.png) New claim form |
+| ![Claim detail](docs/screenshots/04-claim-detail-policyholder.png) Claim detail (policyholder) | ![Adjuster review](docs/screenshots/06-staff-review.png) Claim detail with review actions (adjuster) |
 | ![Work queue](docs/screenshots/05-staff-work-queue.png) Work queue | ![Reports](docs/screenshots/07-reports.png) Reports |
-| ![Mobile queue](docs/screenshots/08-mobile-work-queue.png) Work queue, narrow screen | ![Mobile review](docs/screenshots/09-mobile-staff-review.png) Review actions, narrow screen |
+| ![Mobile landing](docs/screenshots/10-mobile-landing.png) Landing page, phone | ![Mobile navigation](docs/screenshots/11-mobile-navigation.png) Navigation drawer, phone |
+| ![Mobile queue](docs/screenshots/08-mobile-work-queue.png) Work queue, phone | ![Mobile review](docs/screenshots/09-mobile-staff-review.png) Review actions, phone |
 
 ## Architecture
 
@@ -111,7 +122,7 @@ Details, data model, trust boundaries and design reasons: [docs/ARCHITECTURE.md]
 | Backend | Java 21, Spring Boot 4.1.2 (Spring Security 7, Spring Data JPA, Hibernate 7.4, Bean Validation) | Current supported Spring Boot line from Spring Initializr; mature security and transactions |
 | Database | PostgreSQL 16, Flyway 12.4 | Constraints, triggers and NUMERIC money; versioned migrations |
 | API docs | springdoc-openapi 3.2 | OpenAPI at `/v3/api-docs`, Swagger UI in development |
-| Frontend | React 19.3, TypeScript 6.0, Vite 8.3, React Router 7.18, TanStack Query 5, Tailwind CSS 4.3 | Typed SPA, server state via queries, small design-token system |
+| Frontend | React 19.3, TypeScript 6.0, Vite 8.3, React Router 7.18, TanStack Query 5, Tailwind CSS 4.3, Inter and Source Serif 4 via Fontsource | Typed SPA, server state via queries, small design-token system; fonts are bundled, so the strict CSP needs no font CDN |
 | Backend tests | JUnit Jupiter 6, Mockito, AssertJ, Spring Boot Test, Testcontainers 2.0 | Real PostgreSQL in integration tests |
 | Frontend tests | Vitest 5.1, React Testing Library 16, user-event | Component and form behaviour |
 | Browser tests | Cucumber 7.34 (Gherkin), Selenium 4.52 with headless Chrome | Readable scenarios against the real app |
@@ -175,7 +186,7 @@ only) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Main ones: `SPRING_PROFILES_
 | --- | --- | --- |
 | Backend unit | `cd backend && ./mvnw test` | 75 passed |
 | Backend integration (Testcontainers PostgreSQL) | `cd backend && ./mvnw verify` | 60 passed |
-| Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 30 passed, build ok |
+| Frontend (lint, tests, build) | `cd frontend && npm ci && npm run lint && npm test -- --run && npm run build` | lint clean, 43 passed, build ok |
 | Browser acceptance (Cucumber + Selenium) | build jar and frontend, then `cd e2e && ./mvnw test` | 10 scenarios, 96 steps passed |
 
 Integration and browser tests start their own disposable PostgreSQL containers (Docker required) and never touch the
@@ -186,7 +197,8 @@ changes ([.github/workflows/ci.yml](.github/workflows/ci.yml)).
 
 ## Demo walkthrough (about 4 minutes)
 
-1. **Sign in as Priya** (username `priya`, password `demo1234`). *My claims* shows counts by status and the list.
+1. **Open the landing page** and choose **Try as a policyholder (Priya)** (or sign in with `priya` / `demo1234`).
+   *My claims* shows counts by status and the list.
 2. **New claim** → choose policy HC-100421, set a date, "Damaged", a title, a short description and an estimate of
    `65000`. **Save draft**, refresh the page (the draft is still there), **Review claim** → **Submit claim**.
 3. The claim page shows the reference, *Submitted*, and **Automated checks**: R3 (over the 50,000 limit) and R6
@@ -224,15 +236,16 @@ docker-compose.yml   Local PostgreSQL and the integrated app
 
 ## Honest limitations
 
-- No live URL yet; the free-hosting setup is ready and the URL will be added once deployed. On the free host, the
-  first request after 15 idle minutes is slow while the service wakes up.
+- The live demo runs on a free plan (https://claimwillow.onrender.com): the first request after 15 idle minutes is
+  slow, a minute or two, while the service wakes up. The demo accounts and their data are shared and may be reset.
 - Synthetic data only; uploads are not scanned for malware.
 - Sessions and login throttling are in memory: single instance only for now.
 - Evidence is stored on a private volume (`local`) or inside PostgreSQL (`database`, used for free hosting). Azure
   Blob storage is a fail-fast placeholder.
 - No payments, real adjudication, notifications, MFA or password reset — intentionally out of scope.
-- No accessibility audit beyond semantic HTML, labels, focus styles, keyboard-usable controls and text-plus-colour
-  status labels.
+- No formal accessibility audit. The UI uses landmarks, labels, visible focus, keyboard-usable controls, text-plus-colour
+  status tags, AA contrast and honours reduced motion, but has not been tested with every screen reader.
+- Light theme only.
 
 ## License
 

@@ -66,6 +66,11 @@ test creates its own users and policies with random identifiers (`TestFixtures`)
 Vitest + React Testing Library with `fetch` stubbed per test (`tests/testUtils.tsx`):
 
 - `LoginPage` — required fields, server error message, CSRF header sent, role-based redirect.
+- `LandingPage` — sections and landmarks, "Open app" for a signed-in user (no redirect), each one-click demo signs in
+  through `POST /auth/login` with a freshly fetched CSRF token and opens the right screen, failure message, cold-start
+  notice for a slow sign-in, double clicks ignored; the example-claim animation can be paused and is static under
+  reduced motion.
+- `AppShell` — role navigation in the sidebar, the phone navigation drawer (`aria-expanded`, Escape, focus return).
 - `ProtectedRoute` — anonymous redirect, wrong-role redirect, role navigation.
 - `ClaimForm` — R1 mirror validation, a full save → review → submit flow (request bodies asserted), server field
   errors mapped back onto inputs.
@@ -102,6 +107,8 @@ How the suite runs (`e2e/src/test/java/com/claimwillow/e2e/support/AppUnderTest.
    attributes; waits are explicit `WebDriverWait` conditions — no fixed sleeps in steps.
 5. A failed scenario saves a PNG per open browser to `e2e/target/screenshots/` and attaches it to
    `e2e/target/cucumber-report.html`. The app log is in `e2e/target/e2e-backend.log`.
+6. The test browser has Chrome's password manager and leaked-password check turned off. After a form sign-in with
+   the public demo password their prompt can sit invisibly over a headless page and swallow clicks.
 
 Prerequisites: build the jar and the frontend first.
 
@@ -155,7 +162,7 @@ Recorded from actual runs on the development machine (Windows 11, Java 21, Node 
 | --- | --- |
 | Backend unit | 75 passed, 0 failed |
 | Backend integration | 60 passed, 0 failed (including database-mode attachments, the HTTPS proxy check and the username migration on existing data) |
-| Frontend | 30 passed, 0 failed |
+| Frontend | 43 passed, 0 failed |
 | Browser acceptance | 10 scenarios / 96 steps passed |
 
 The same jobs (backend, frontend, e2e, docker, gated by the changed files) run on GitHub Actions for pull requests

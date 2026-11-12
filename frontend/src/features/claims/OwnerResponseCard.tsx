@@ -3,7 +3,7 @@ import { ApiRequestError } from '../../api/client';
 import type { ClaimDetail } from '../../api/claims';
 import { useRespond } from '../../api/staff';
 import { useToast } from '../../components/Toast';
-import { Alert, Button, Card, CardHeader, TextArea } from '../../components/ui';
+import { Alert, Button, Callout, Card, CardHeader, TextArea } from '../../components/ui';
 import { formatDateTime } from '../../lib/format';
 
 /** Shown to the owner while the claim is NEEDS_INFO: the adjuster's request and a reply form. */
@@ -25,17 +25,16 @@ export function OwnerResponseCard({ claim, onRefresh, evidence }: { claim: Claim
   };
 
   return (
-    <Card className="border-warning/40" data-testid="response-card">
-      <CardHeader title="The adjuster needs more information" />
-      <div className="flex flex-col gap-4 p-5">
+    <Card className="border-warning/30" data-testid="response-card">
+      <CardHeader title="The adjuster needs more information" icon="message" />
+      <div className="flex flex-col gap-4 p-4 sm:p-5">
         {claim.openRequest && (
-          <blockquote className="rounded-md border-l-4 border-warning bg-warning-soft px-4 py-3 text-sm text-ink"
-            data-testid="open-request">
-            <p className="whitespace-pre-wrap">{claim.openRequest.message}</p>
-            <footer className="mt-1 text-xs text-ink-muted">
+          <Callout tone="warning" icon="message" testId="open-request"
+            title={<span className="whitespace-pre-wrap font-normal text-ink">{claim.openRequest.message}</span>}>
+            <span className="text-xs">
               {claim.openRequest.requestedBy} · {formatDateTime(claim.openRequest.requestedAt)}
-            </footer>
-          </blockquote>
+            </span>
+          </Callout>
         )}
         {evidence}
         {error && (

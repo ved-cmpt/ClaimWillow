@@ -3,7 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { api, toQuery } from '../api/client';
 import type { ClaimStatus } from '../api/claims';
 import { ClaimStatusPill, claimStatusLabel } from '../components/ClaimStatusPill';
-import { Alert, Card, CardHeader, PageHeader, SkeletonRows } from '../components/ui';
+import { FilterDate, FilterSelect, rowClass, TableFrame, theadClass } from '../components/Filters';
+import { Icon } from '../components/Icon';
+import { Alert, buttonClass, Callout, PageHeader, SkeletonRows, Th } from '../components/ui';
 import { formatMoney } from '../lib/format';
 
 interface ReportSummary {
@@ -11,8 +13,6 @@ interface ReportSummary {
   totalClaims: number;
   totalEstimated: number;
 }
-
-const inputClass = 'rounded-md border border-line-strong bg-surface px-3 py-2 text-sm';
 
 export function ReportsPage() {
   const [from, setFrom] = useState('');
@@ -27,64 +27,56 @@ export function ReportsPage() {
 
   return (
     <>
-      <PageHeader title="Reports" subtitle="Submitted claims by status, straight from the live database." />
-      <Card className="mb-6">
-        <div className="grid gap-3 px-5 py-4 sm:grid-cols-4 sm:items-end">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="report-from" className="text-sm font-medium">Submitted from</label>
-            <input id="report-from" type="date" className={inputClass} value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="report-to" className="text-sm font-medium">Submitted to</label>
-            <input id="report-to" type="date" className={inputClass} value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="report-status" className="text-sm font-medium">Export status</label>
-            <select id="report-status" className={inputClass} value={status} onChange={(e) => setStatus(e.target.value)}>
+      <PageHeader title="Reports" icon="chart" subtitle="Submitted claims by status, straight from the live database." />
+      <TableFrame
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <FilterDate label="From" accessibleLabel="Submitted from" id="report-from" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <FilterDate label="To" accessibleLabel="Submitted to" id="report-to" value={to} onChange={(e) => setTo(e.target.value)} />
+            <FilterSelect label="Export status" icon="tag" id="report-status" value={status}
+              onChange={(e) => setStatus(e.target.value)}>
               <option value="">All statuses</option>
               {summary.data?.rows.map((r) => <option key={r.status} value={r.status}>{claimStatusLabel[r.status]}</option>)}
-            </select>
+            </FilterSelect>
+            <a href={csvUrl} download data-testid="export-csv" className={buttonClass('primary', 'sm:ml-auto')}>
+              <Icon name="download" size={15} />Export CSV
+            </a>
           </div>
-          <a href={csvUrl} download data-testid="export-csv"
-            className="inline-flex items-center justify-center rounded-md border border-accent bg-accent px-3.5 py-2
-              text-sm font-medium text-white hover:bg-accent-strong">Export CSV</a>
-        </div>
-      </Card>
-      <Card>
-        <CardHeader title="Claims by status" />
+        }>
         {summary.isPending && <SkeletonRows rows={6} />}
-        {summary.isError && <div className="p-5"><Alert tone="error">The report could not be loaded.</Alert></div>}
+        {summary.isError && <div className="p-4"><Alert tone="error">The report could not be loaded.</Alert></div>}
         {summary.data && (
           <table className="w-full text-sm" data-testid="report-table">
-            <thead className="border-b border-line bg-subtle text-left text-xs uppercase tracking-wide text-ink-faint">
+            <caption className="sr-only">Claims by status</caption>
+            <thead className={theadClass}>
               <tr>
-                <th scope="col" className="px-5 py-2.5 font-medium">Status</th>
-                <th scope="col" className="px-5 py-2.5 text-right font-medium">Claims</th>
-                <th scope="col" className="px-5 py-2.5 text-right font-medium">Total estimated</th>
+                <Th icon="tag" className="pl-4 sm:pl-5">Status</Th>
+                <Th icon="list" className="text-right">Claims</Th>
+                <Th icon="money" className="pr-4 text-right sm:pr-5">Total estimated</Th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {summary.data.rows.map((r) => (
-                <tr key={r.status} data-testid={`report-row-${r.status}`}>
-                  <td className="px-5 py-2.5"><ClaimStatusPill status={r.status} /></td>
-                  <td className="px-5 py-2.5 text-right tabular">{r.count}</td>
-                  <td className="px-5 py-2.5 text-right tabular">{formatMoney(r.totalEstimated)}</td>
+                <tr key={r.status} data-testid={`report-row-${r.status}`} className={rowClass}>
+                  <td className="py-2.5 pl-4 pr-3 sm:pl-5"><ClaimStatusPill status={r.status} /></td>
+                  <td className="px-3 py-2.5 text-right tabular">{r.count}</td>
+                  <td className="py-2.5 pl-3 pr-4 text-right tabular sm:pr-5">{formatMoney(r.totalEstimated)}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot className="border-t border-line-strong font-semibold">
+            <tfoot className="border-t border-line-strong bg-canvas/60 font-semibold">
               <tr>
-                <th scope="row" className="px-5 py-2.5 text-left">Total</th>
-                <td className="px-5 py-2.5 text-right tabular" data-testid="report-total">{summary.data.totalClaims}</td>
-                <td className="px-5 py-2.5 text-right tabular">{formatMoney(summary.data.totalEstimated)}</td>
+                <th scope="row" className="py-2.5 pl-4 pr-3 text-left sm:pl-5">Total</th>
+                <td className="px-3 py-2.5 text-right tabular" data-testid="report-total">{summary.data.totalClaims}</td>
+                <td className="py-2.5 pl-3 pr-4 text-right tabular sm:pr-5">{formatMoney(summary.data.totalEstimated)}</td>
               </tr>
             </tfoot>
           </table>
         )}
-      </Card>
-      <p className="mt-4 text-xs text-ink-faint">
+      </TableFrame>
+      <Callout tone="neutral" className="mt-4">
         Estimates are policyholder estimates, not payable amounts. Drafts are excluded. Export is limited to 10,000 rows.
-      </p>
+      </Callout>
     </>
   );
 }

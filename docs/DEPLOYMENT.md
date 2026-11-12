@@ -177,7 +177,7 @@ Rules for the conversion:
 
 Open `https://<service-name>.onrender.com` (the URL is at the top of the service page) and check:
 
-1. The sign-in page loads over HTTPS and shows the synthetic-data notice.
+1. The landing page loads over HTTPS and shows the synthetic-data notice; **Try as a policyholder (Priya)** signs in.
 2. `https://<service-name>.onrender.com/actuator/health` returns `{"status":"UP"}`. This also proves the database
    connection.
 3. Sign in as `priya` with the demo password. Create a claim, attach a small PDF or PNG, and submit it.
@@ -258,8 +258,9 @@ Policies and claims are only created when missing; existing claims are never cha
    characters) and save. Render redeploys.
 2. In **Logs**, expect `Synthetic demo data is present (idempotent seed complete).` The five accounts now accept the
    new password.
-3. Update the password in the README's "Live demo" section and on the sign-in page (`frontend/src/pages/LoginPage.tsx`)
-   through a pull request.
+3. Update the password in the README's "Live demo" section and in the frontend through a pull request:
+   `DEMO_PASSWORD` in `frontend/src/features/auth/demo.ts` is used by the sign-in page and the landing page's
+   one-click demo buttons, which stop working until it matches.
 4. Sessions live in memory, so anyone already signed in stays signed in until the restart that the deploy performs.
 
 **Reset the demo data** (wipes every claim, note, evidence file and account, then re-seeds):
@@ -377,7 +378,7 @@ downgrade authentication or storage privacy to make a host work.
 
 ## 6. Post-deployment checks
 
-1. The HTTPS URL renders the sign-in page and the synthetic-data notice.
+1. The HTTPS URL renders the landing page and the synthetic-data notice.
 2. Sign in as a demo policyholder; create, save and submit a claim (CSRF works behind the proxy).
 3. Sign in as a demo adjuster; assign, review, request info, decide and close.
 4. Upload and download evidence; confirm another policyholder gets 404 for the same URL.

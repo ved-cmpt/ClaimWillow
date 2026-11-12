@@ -5,7 +5,7 @@ import { ApiRequestError } from '../api/client';
 import { useClaim, useSaveDraft, useSubmitClaim } from '../api/claims';
 import type { ClaimDetail, DraftInput, IncidentType } from '../api/claims';
 import type { Policy } from '../api/types';
-import { Alert, Button, Card, CardHeader, PageHeader, SelectField, TextArea, TextField } from '../components/ui';
+import { Alert, Button, Callout, Card, CardHeader, PageHeader, SelectField, TextArea, TextField } from '../components/ui';
 import { Spinner } from '../components/Spinner';
 import { useToast } from '../components/Toast';
 import { formatDate, formatMoney, todayIso } from '../lib/format';
@@ -186,7 +186,8 @@ export function ClaimForm({ draft, policies, policiesLoading = false }: ClaimFor
 
   return (
     <>
-      <PageHeader title={draft ? 'Continue your claim' : 'New claim'}
+      <PageHeader title={draft ? 'Continue your claim' : 'New claim'} icon="file"
+        breadcrumbs={[{ label: 'My claims', to: '/claims' }, { label: draft ? 'Draft' : 'New claim' }]}
         subtitle="Fields marked * are required to submit. You can save a draft at any point." />
       {formError && <div className="mb-4"><Alert tone="error" testId="form-error">{formError}</Alert></div>}
 
@@ -207,7 +208,7 @@ export function ClaimForm({ draft, policies, policiesLoading = false }: ClaimFor
               ))}
             </SelectField>
             {selectedPolicy && (
-              <p className="text-sm text-ink-muted" data-testid="selected-policy-terms">
+              <p className="rounded-md bg-subtle px-3 py-2 text-sm text-ink-muted" data-testid="selected-policy-terms">
                 Period {formatDate(selectedPolicy.effectiveDate)} – {formatDate(selectedPolicy.expirationDate)} ·
                 Limit {formatMoney(selectedPolicy.coverageLimit)} · Deductible {formatMoney(selectedPolicy.deductible)}
               </p>
@@ -243,8 +244,8 @@ export function ClaimForm({ draft, policies, policiesLoading = false }: ClaimFor
           <Section number={3} title="Evidence">
             {claimId
               ? <EvidenceList claimId={claimId} canUpload />
-              : <p className="text-sm text-ink-muted" data-testid="evidence-save-first">Save the draft first, then
-                  attach photos, receipts or reports (PDF, PNG or JPEG, up to 5 MB each).</p>}
+              : <Callout tone="neutral" icon="paperclip" testId="evidence-save-first">Save the draft first, then
+                  attach photos, receipts or reports (PDF, PNG or JPEG, up to 5 MB each).</Callout>}
           </Section>
 
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -262,12 +263,12 @@ export function ClaimForm({ draft, policies, policiesLoading = false }: ClaimFor
 function Section({ number, title, children }: { number: number; title: string; children: ReactNode }) {
   return (
     <Card aria-labelledby={`section-${number}`}>
-      <div className="flex items-center gap-3 border-b border-line px-5 py-3">
-        <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-soft
+      <div className="flex items-center gap-3 border-b border-line px-4 py-2.5 sm:px-5">
+        <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-soft
           text-xs font-semibold text-accent-strong">{number}</span>
-        <h2 id={`section-${number}`} className="font-semibold text-ink">{title}</h2>
+        <h2 id={`section-${number}`} className="text-[15px] font-semibold text-ink">{title}</h2>
       </div>
-      <div className="flex flex-col gap-4 p-5">{children}</div>
+      <div className="flex flex-col gap-4 p-4 sm:p-5">{children}</div>
     </Card>
   );
 }
@@ -292,9 +293,9 @@ function ReviewPanel({ values, policy, claimId, busy, onBack, onSubmit }: Review
   ];
   return (
     <Card data-testid="claim-review">
-      <CardHeader title="Review before submitting" />
-      <div className="flex flex-col gap-5 p-5">
-        <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-[10rem_1fr]">
+      <CardHeader title="Review before submitting" icon="checkCircle" />
+      <div className="flex flex-col gap-5 p-4 sm:p-5">
+        <dl className="grid gap-x-6 gap-y-2.5 sm:grid-cols-[10rem_1fr]">
           {rows.map(([k, v]) => (
             <div key={k} className="contents">
               <dt className="text-sm text-ink-faint">{k}</dt>
