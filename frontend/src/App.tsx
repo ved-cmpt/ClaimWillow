@@ -3,7 +3,7 @@ import { AppShell } from './components/AppShell';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ClaimDetailPage } from './pages/ClaimDetailPage';
 import { ClaimFormPage } from './pages/ClaimFormPage';
-import { HomeRedirect } from './pages/HomeRedirect';
+import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyClaimsPage } from './pages/MyClaimsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -16,7 +16,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<HomeRedirect />} />
+      <Route path="/" element={<LandingPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route element={<ProtectedRoute roles={['POLICYHOLDER']} />}>
