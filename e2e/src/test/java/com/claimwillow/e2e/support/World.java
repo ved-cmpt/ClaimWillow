@@ -76,7 +76,14 @@ public class World {
         }
         options.addArguments("--window-size=1366,900", "--lang=en-US", "--disable-gpu", "--no-sandbox",
                 "--disable-dev-shm-usage", "--disable-search-engine-choice-screen");
-        options.setExperimentalOption("prefs", Map.of("intl.accept_languages", "en-US"));
+        // No password-manager or leaked-password prompts: after a form sign-in with the public demo password
+        // they can sit invisibly over the page in headless mode and swallow clicks.
+        options.addArguments("--disable-features=PasswordLeakDetection,PasswordManagerOnboarding");
+        options.setExperimentalOption("prefs", Map.of(
+                "intl.accept_languages", "en-US",
+                "credentials_enable_service", false,
+                "profile.password_manager_enabled", false,
+                "profile.password_manager_leak_detection", false));
         WebDriver driver = new ChromeDriver(options);
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(30));
         return driver;
