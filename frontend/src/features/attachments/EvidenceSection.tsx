@@ -2,7 +2,8 @@ import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, ApiRequestError } from '../../api/client';
-import { Alert, Card, CardHeader, SkeletonRows } from '../../components/ui';
+import { Alert, BlockHeading, SkeletonRows } from '../../components/ui';
+import { Icon } from '../../components/Icon';
 import { useToast } from '../../components/Toast';
 import { formatDateTime } from '../../lib/format';
 
@@ -87,11 +88,13 @@ export function EvidenceList({ claimId, canUpload, compact = false }: Props) {
         <p className="text-sm text-ink-muted" data-testid="no-evidence">No files attached yet.</p>
       )}
       {list.data && list.data.length > 0 && (
-        <ul className="divide-y divide-line rounded-md border border-line">
+        <ul className="divide-y divide-line rounded-md border border-line bg-surface">
           {list.data.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
               data-testid="attachment">
-              <div className="min-w-0">
+              <div className="flex min-w-0 items-start gap-2.5">
+                <Icon name="file" size={16} className="mt-0.5 text-ink-faint" />
+                <div className="min-w-0">
                 <a href={a.downloadUrl} download className="break-all font-medium text-accent hover:underline"
                   data-testid="attachment-link">{a.filename}</a>
                 {!compact && (
@@ -99,8 +102,9 @@ export function EvidenceList({ claimId, canUpload, compact = false }: Props) {
                     {formatSize(a.sizeBytes)} · {a.uploadedBy ?? 'Unknown'} · {formatDateTime(a.createdAt)}
                   </p>
                 )}
+                </div>
               </div>
-              <span className="text-xs uppercase text-ink-faint">{a.contentType.split('/')[1]}</span>
+              <span className="rounded bg-subtle px-1.5 text-[11px] font-medium uppercase text-ink-muted">{a.contentType.split('/')[1]}</span>
             </li>
           ))}
         </ul>
@@ -109,8 +113,9 @@ export function EvidenceList({ claimId, canUpload, compact = false }: Props) {
       {canUpload && (
         <div className="flex flex-wrap items-center gap-3">
           <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-line-strong
-            bg-surface px-3.5 py-2 text-sm font-medium text-ink hover:bg-subtle focus-within:ring-2
+            bg-surface px-3 py-1.5 text-sm font-medium text-ink shadow-soft hover:bg-subtle focus-within:ring-2
             focus-within:ring-accent ${upload.isPending ? 'opacity-60' : ''}`}>
+            <Icon name="paperclip" size={15} />
             {upload.isPending ? 'Uploading…' : 'Attach a file'}
             <input ref={inputRef} type="file" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg"
               className="sr-only" onChange={onChange} disabled={upload.isPending} data-testid="evidence-input" />
@@ -124,9 +129,9 @@ export function EvidenceList({ claimId, canUpload, compact = false }: Props) {
 
 export function EvidenceCard(props: Props) {
   return (
-    <Card data-testid="evidence-card">
-      <CardHeader title="Evidence" />
-      <div className="p-5"><EvidenceList {...props} /></div>
-    </Card>
+    <section data-testid="evidence-card" aria-labelledby="evidence-heading">
+      <BlockHeading id="evidence-heading" title="Evidence" icon="paperclip" />
+      <EvidenceList {...props} />
+    </section>
   );
 }

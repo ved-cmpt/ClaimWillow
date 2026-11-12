@@ -5,7 +5,8 @@ import { useAddNote, useNotes } from '../../api/staff';
 import type { NoteType } from '../../api/staff';
 import { Pill } from '../../components/StatusPill';
 import { useToast } from '../../components/Toast';
-import { Alert, Button, Card, CardHeader, SkeletonRows, TextArea } from '../../components/ui';
+import { Avatar } from '../../components/AppShell';
+import { Alert, BlockHeading, Button, SkeletonRows, TextArea } from '../../components/ui';
 import { formatDateTime } from '../../lib/format';
 
 const noteLabel: Record<NoteType, { label: string; tone: 'neutral' | 'warning' | 'info' | 'accent' }> = {
@@ -36,26 +37,31 @@ export function NotesCard({ claim, staff }: { claim: ClaimDetail; staff: boolean
   };
 
   return (
-    <Card data-testid="notes-card">
-      <CardHeader title="Notes" />
+    <section data-testid="notes-card" aria-labelledby="notes-heading">
+      <BlockHeading id="notes-heading" title="Notes" icon="message" />
       {notes.isPending && <SkeletonRows rows={2} />}
-      {notes.isError && <div className="p-5"><Alert tone="error">Notes could not be loaded.</Alert></div>}
-      {notes.data && notes.data.length === 0 && <p className="px-5 py-4 text-sm text-ink-muted">No notes yet.</p>}
+      {notes.isError && <Alert tone="error">Notes could not be loaded.</Alert>}
+      {notes.data && notes.data.length === 0 && <p className="text-sm text-ink-muted">No notes yet.</p>}
       {notes.data && notes.data.length > 0 && (
-        <ul className="divide-y divide-line">
+        <ul className="flex flex-col gap-2">
           {notes.data.map((n) => (
-            <li key={n.id} className="flex flex-col gap-1.5 px-5 py-3" data-testid="note" data-note-type={n.type}>
-              <div className="flex flex-wrap items-center gap-2 text-xs text-ink-faint">
-                <Pill tone={noteLabel[n.type].tone} label={noteLabel[n.type].label} />
-                <span>{n.authorName ?? 'Unknown'} · {formatDateTime(n.createdAt)}</span>
+            <li key={n.id} className="flex gap-3 rounded-md border border-line bg-surface px-3 py-2.5 sm:px-4"
+              data-testid="note" data-note-type={n.type}>
+              <Avatar name={n.authorName ?? '?'} size="sm" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-ink-faint">
+                  <span className="text-sm font-medium text-ink">{n.authorName ?? 'Unknown'}</span>
+                  <span>{formatDateTime(n.createdAt)}</span>
+                  <Pill tone={noteLabel[n.type].tone} label={noteLabel[n.type].label} />
+                </div>
+                <p className="whitespace-pre-wrap text-sm text-ink">{n.body}</p>
               </div>
-              <p className="whitespace-pre-wrap text-sm text-ink">{n.body}</p>
             </li>
           ))}
         </ul>
       )}
       {canAdd && (
-        <div className="flex flex-col gap-2 border-t border-line px-5 py-4">
+        <div className="mt-3 flex flex-col gap-2">
           <TextArea label="Add an internal note" value={body} onChange={(e) => setBody(e.target.value)}
             hint="Internal notes are never shown to the policyholder." error={error} maxLength={4000}
             data-testid="note-body" />
@@ -63,6 +69,6 @@ export function NotesCard({ claim, staff }: { claim: ClaimDetail; staff: boolean
             data-testid="add-note">Add note</Button>
         </div>
       )}
-    </Card>
+    </section>
   );
 }
