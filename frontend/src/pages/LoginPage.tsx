@@ -42,7 +42,7 @@ export function LoginPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-canvas px-4 text-center">
         <Spinner label="Loading" />
-        <p className="max-w-xs text-xs text-ink-faint">The free demo host may take up to a minute to wake up.</p>
+        <p className="max-w-xs text-xs text-ink-faint">The free demo host may take a minute or two to wake up.</p>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export function LoginPage() {
               </Button>
               {login.isPending && (
                 <p className="text-center text-xs text-ink-faint" aria-live="polite">
-                  The first sign-in after a quiet spell can take up to a minute.
+                  The first sign-in after a quiet spell can take a minute or two.
                 </p>
               )}
             </div>

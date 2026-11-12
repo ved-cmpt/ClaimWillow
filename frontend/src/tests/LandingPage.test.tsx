@@ -48,7 +48,7 @@ describe('LandingPage', () => {
     expect(screen.getByTestId('demo-policyholder')).toHaveTextContent('Try as a policyholder (Priya)');
     expect(screen.getByTestId('demo-adjuster')).toHaveTextContent('Try as an adjuster (Dana)');
     expect(screen.getByTestId('demo-admin')).toHaveTextContent('Try as an admin');
-    expect(screen.getAllByText(/first load can take up to a minute/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/first load can take a minute or two/).length).toBeGreaterThan(0);
     expect(screen.getByTestId('synthetic-notice')).toHaveTextContent('Synthetic data only.');
     expect(screen.getByTestId('repo-link')).toHaveAttribute('href', REPOSITORY_URL);
     for (const name of ['Five clear steps, one shared record.', 'Six rules, each one explained.',
@@ -162,7 +162,7 @@ describe('LandingPage', () => {
     fireEvent.click(screen.getByTestId('demo-adjuster'));
     expect(screen.queryByTestId('demo-waking')).not.toBeInTheDocument();
     await act(async () => { vi.advanceTimersByTime(SLOW_AFTER_MS + 100); });
-    expect(screen.getByTestId('demo-waking')).toHaveTextContent('first load can take up to a minute');
+    expect(screen.getByTestId('demo-waking')).toHaveTextContent('first load can take a minute or two');
     expect(logins).toBe(1);
   });
 });

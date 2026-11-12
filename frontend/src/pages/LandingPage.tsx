@@ -180,7 +180,7 @@ function DemoButtons({ testIdSuffix = '' }: { testIdSuffix?: string }) {
         {demo.slow && (
           <p className="flex items-center gap-2 text-sm text-ink-muted" data-testid={`demo-waking${testIdSuffix}`}>
             <Icon name="clock" size={15} className="text-accent" />
-            Waking the demo server. The first load can take up to a minute.
+            Waking the demo server. The first load can take a minute or two.
           </p>
         )}
         {demo.error && (
@@ -263,7 +263,7 @@ export function LandingPage() {
                 <DemoButtons />
                 <p className="mt-4 flex flex-wrap items-center gap-x-1.5 text-sm text-ink-faint">
                   <Icon name="clock" size={15} />
-                  Runs on a free host, so the first load can take up to a minute.
+                  Runs on a free host, so the first load can take a minute or two.
                   <Link to="/login" className="font-medium text-ink-muted underline underline-offset-2 hover:text-ink">
                     Or sign in with a username.</Link>
                 </p>

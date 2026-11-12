@@ -29,9 +29,9 @@ instead, sign in with a username and the shared password **`demo1234`**; the sig
 > **Synthetic data only.** Every account, policy and claim is fictional, and the password is public on purpose. Do not
 > enter real personal information or upload real documents. The demo data may be reset at any time.
 
-> **First load can take about a minute.** The free host sleeps after 15 minutes without visitors. The first request
-> after that wakes the service and starts the JVM, which takes about a minute, sometimes a little more. After that
-> it responds normally.
+> **First load can take a minute or two.** The free host sleeps after 15 minutes without visitors. The first request
+> after that wakes the service and starts the JVM, which takes about a minute, sometimes nearly two (one wake-up on
+> 2026-11-12 took 111 s). After that it responds normally.
 
 ### Try it in 3 minutes
 
@@ -237,7 +237,7 @@ docker-compose.yml   Local PostgreSQL and the integrated app
 ## Honest limitations
 
 - The live demo runs on a free plan (https://claimwillow.onrender.com): the first request after 15 idle minutes is
-  slow, about a minute, while the service wakes up. The demo accounts and their data are shared and may be reset.
+  slow, a minute or two, while the service wakes up. The demo accounts and their data are shared and may be reset.
 - Synthetic data only; uploads are not scanned for malware.
 - Sessions and login throttling are in memory: single instance only for now.
 - Evidence is stored on a private volume (`local`) or inside PostgreSQL (`database`, used for free hosting). Azure
