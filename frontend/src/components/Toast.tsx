@@ -16,9 +16,9 @@ interface ToastApi {
 const ToastContext = createContext<ToastApi>({ show: () => undefined });
 
 const toneClass: Record<ToastTone, string> = {
-  success: 'border-success/40 bg-success-soft text-success',
-  error: 'border-danger/40 bg-danger-soft text-danger',
-  info: 'border-info/40 bg-info-soft text-info',
+  success: 'text-success',
+  error: 'text-danger',
+  info: 'text-info',
 };
 
 /** Lightweight accessible toasts announced through a polite live region. */
@@ -43,11 +43,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex flex-col items-center gap-2 px-4">
         {items.map((t) => (
           <div key={t.id} data-testid="toast"
-            className={`pointer-events-auto flex max-w-md items-start gap-3 rounded-md border px-4 py-3 text-sm
-              shadow-md ${toneClass[t.tone]}`}>
+            className="pointer-events-auto flex max-w-md items-start gap-3 rounded-lg border border-line bg-surface
+              px-4 py-3 text-sm text-ink shadow-pop animate-fade-up">
+            <span aria-hidden="true" className={`mt-[7px] h-2 w-2 shrink-0 rounded-full bg-current ${toneClass[t.tone]}`} />
             <span className="flex-1">{t.message}</span>
             <button type="button" onClick={() => dismiss(t.id)} aria-label="Dismiss notification"
-              className="text-current opacity-70 hover:opacity-100">×</button>
+              className="rounded px-1 text-ink-faint hover:bg-hover hover:text-ink">×</button>
           </div>
         ))}
       </div>
